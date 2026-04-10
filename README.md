@@ -65,7 +65,7 @@ Songs are then ranked highest-to-lowest score and the top K results are returned
 flowchart TD
   A([Start: User Requests Recommendations]) --> B[📥 INPUT<br/>User Preference Profile:<br/>• favorite_genres list<br/>• favorite_moods list<br/>• target_energy 0.0-1.0]
   B --> C[📂 Load Songs<br/>Read songs.csv<br/>into memory]
-  C --> D[Initialize<br/>scored_songs = []]
+  C --> D[Initialize<br/>scored_songs list]
   D --> E[🔄 FOR EACH song in<br/>songs.csv]
   E --> F[🎵 Current Song:<br/>genre, mood, energy,<br/>danceability, etc.]
   F --> G{Genre in<br/>favorite_genres?}
@@ -82,7 +82,7 @@ flowchart TD
   K --> L{More songs<br/>to score?}
   L -->|Yes| E
   L -->|No| M[🔗 RANKING RULE<br/>Sort by score<br/>descending<br/>highest → lowest]
-  M --> N[Slice Top K<br/>top_k_songs =<br/>scored_songs[0:K]]
+  M --> N[Slice Top K<br/>Return top k songs<br/>sorted by score]
   N --> O[📤 OUTPUT<br/>Return Top K<br/>Recommendations<br/>with scores]
   O --> P([✅ End])
 ```
