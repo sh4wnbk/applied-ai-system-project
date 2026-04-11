@@ -7,8 +7,8 @@
 ## Goal / Task
 
 This recommender tries to suggest songs a user might like.
-It looks at genre, mood, and energy.
-It gives each song a score and returns the top matches.
+ - Looks at genre, mood, and energy.
+ - Gives each song a score and returns the top matches.
 
 Status: ACTIVE 🟢
 
@@ -42,24 +42,22 @@ That happens because the energy score is linear and the catalog does not have ma
 
 ## 🧪 Evaluation Process
 
-I tested 6 profiles.
+Tested 6 profiles.
 Three were normal profiles and three were adversarial or conflicting profiles.
 The profiles were High-Energy Pop, Chill Lofi, Deep Intense Rock, Conflicting Happy but Low Energy, Sad but High Energy, and Noisy Mismatch.
 
-I checked the top 5 results for each profile.
-I also compared the outputs before and after a weight-shift experiment.
+Checked the top 5 results for each profile.
+Compared the outputs before and after a weight-shift experiment.
 That experiment showed that stronger energy weighting changed the ranking more than the genre weight did.
-I also compared the catalog genre counts with the recommendation counts to look for repetition and bias.
+Compared the catalog genre counts with the recommendation counts to look for repetition and bias.
 
-## Optional Extensions Implemented (Plain Language)
+## Optional Extensions Implemented
 
-I implemented all 4 optional extension challenges and captured a side-by-side dashboard screenshot-like artifact.
-
-- Dashboard image artifact: [assets/side_by_side_table.png](assets/side_by_side_table.png)
+All 4 optional extension challenges were implemented.
 
 ### Challenge 1: Advanced Song Features
 
-I expanded the song data with additional features that were not in the baseline:
+The song data was expanded with additional features that were not in the baseline:
 
 - Popularity (0-100)
 - Release Year
@@ -68,29 +66,29 @@ I expanded the song data with additional features that were not in the baseline:
 - Speechiness
 - Liveness
 
-In plain terms, this means the recommender now looks beyond just genre/mood/energy and can reward songs that better match a preferred era, detailed vibe, and audio texture profile.
+In effect, the recommender now looks beyond just genre/mood/energy and can reward songs that better match a preferred era, detailed vibe, and audio texture profile.
 
 ### Challenge 2: Multiple Scoring Modes
 
-I built multiple scoring strategies so the same user can be ranked in different ways:
+Multiple scoring strategies were built so the same user can be ranked in different ways:
 
 - Conservative mode: balanced and stable with trend/discovery bonuses
 - Discovery mode: leans more toward hidden gems and exploratory matching
 - Hybrid mode: blends Conservative and Discovery using alpha
 
-In plain terms, this lets the recommender behave like a "safe" mode, an "explore" mode, or a blend between the two.
+In effect, the recommender can behave like a "safe" mode, an "explore" mode, or a blend between the two.
 
 ### Challenge 3: Diversity and Fairness Logic
 
-I added a Diversity Penalty of -0.5 when an artist is already in the selected top-k list.
+A Diversity Penalty of -0.5 was added when an artist is already in the selected top-k list.
 
-In plain terms, this reduces artist repetition so recommendations feel less repetitive and more varied.
+In effect, this reduces artist repetition so recommendations feel less repetitive and more varied.
 
 ### Challenge 4: Visual Summary Table
 
-I built a visual side-by-side terminal summary using Rich, including scores and per-mode reasons.
+A visual side-by-side terminal summary was built using Rich, including scores and per-mode reasons.
 
-In plain terms, you can quickly compare why a song ranks differently across Conservative, Discovery, and Hybrid without reading raw logs.
+In effect, songs can be quickly compared to see why they rank differently across Conservative, Discovery, and Hybrid modes without reading raw logs.
 
 ## ✅ Intended Use and ❌ Non-Intended Use
 
@@ -110,13 +108,8 @@ It should not be treated as a full picture of a user's taste.
 
 ## Personal 💭 Reflection
 
-The biggest thing I learned was that a recommender can look balanced on paper and still behave unevenly in practice.
-A small weight choice changed which songs rose to the top, and that made me pay attention to the difference between a score that is mathematically correct and a result that actually feels right.
+The project demonstrated that a recommender system can appear balanced in its design while still producing uneven outcomes in practice. Small adjustments to feature weights altered which songs ranked highest, highlighting the distinction between a mathematically valid score and an output that aligns with expected behavior.
 
-AI tools, Gemini/Copilot - helped me move faster when I needed to test ideas, compare outputs, and write summaries.
-I still had to double-check them when the result depended on exact scores, because a tiny change in the numbers could change the ranking.
-That mattered most when I checked why "Gym Hero" kept appearing and when I tested the weight shift.
+AI tools such as Gemini and Copilot accelerated tasks involving idea testing, output comparison, and summary generation. However, their outputs required verification when rankings depended on precise numerical values, since minor score changes could shift the ordering of recommendations. This was most evident when examining the repeated appearance of “Gym Hero” and when evaluating the effects of weight modifications.
 
-What surprised me most was how simple rules can still feel like real recommendations.
-Even without any learning from users, the system could produce results that seemed sensible for one profile and wrong for another.
-If I kept extending this project, I would add more songs, rebalance the weights, and add a diversity rule so the same songs do not keep coming back.
+The results also showed that simple, rule‑based systems can generate recommendations that seem appropriate for some user profiles and misaligned for others, even without user‑level learning. If the project were extended, the next steps would include expanding the song dataset, adjusting the weighting scheme, and introducing a diversity constraint to reduce repetition in the top recommendations.
