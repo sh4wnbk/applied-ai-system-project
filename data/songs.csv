@@ -1,21 +1,21 @@
-id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness
-1,Sunrise City,Neon Echo,pop,happy,0.82,118,0.84,0.79,0.18
-2,Midnight Coding,LoRoom,lofi,chill,0.42,78,0.56,0.62,0.71
-3,Storm Runner,Voltline,rock,intense,0.91,152,0.48,0.66,0.10
-4,Library Rain,Paper Lanterns,lofi,chill,0.35,72,0.60,0.58,0.86
-5,Gym Hero,Max Pulse,pop,intense,0.93,132,0.77,0.88,0.05
-6,Spacewalk Thoughts,Orbit Bloom,ambient,chill,0.28,60,0.65,0.41,0.92
-7,Coffee Shop Stories,Slow Stereo,jazz,relaxed,0.37,90,0.71,0.54,0.89
-8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22
-9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78
-10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35
-11,Funkytown Express,The Grooveliner,funk,energetic,0.85,112,0.75,0.88,0.12
-12,Neon Cathedral,CyberPulse,synthwave,moody,0.68,95,0.45,0.62,0.25
-13,Midnight Espresso,Caffeine High,jazz,focused,0.42,120,0.68,0.55,0.78
-14,Viking Thunder,Odin's Echo,metal,intense,0.96,165,0.32,0.45,0.02
-15,Retro Future,80s Kids,synthwave,happy,0.72,118,0.82,0.79,0.15
-16,Deep Space House,Orbital,house,chill,0.55,124,0.58,0.81,0.08
-17,Acoustic Morning,String Theory,folk,happy,0.38,88,0.72,0.52,0.92
-18,Gritty Streets,Concrete Jungle,hiphop,intense,0.88,92,0.55,0.85,0.18
-19,Rainy Day Piano,Solitude,ambient,chill,0.15,65,0.42,0.35,0.98
-20,Sunset Groove,Summer Heat,funk,happy,0.78,110,0.88,0.82,0.10
+id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness,popularity,release_year,mood_tag,instrumentalness,speechiness,liveness
+1,Sunrise City,Neon Echo,pop,happy,0.82,118,0.84,0.79,0.18,87,2018,euphoric,0.05,0.06,0.18
+2,Midnight Coding,LoRoom,lofi,chill,0.42,78,0.56,0.62,0.71,64,2021,nostalgic,0.62,0.04,0.10
+3,Storm Runner,Voltline,rock,intense,0.91,152,0.48,0.66,0.10,58,2015,aggressive,0.03,0.05,0.22
+4,Library Rain,Paper Lanterns,lofi,chill,0.35,72,0.60,0.58,0.86,41,2019,nostalgic,0.78,0.03,0.08
+5,Gym Hero,Max Pulse,pop,intense,0.93,132,0.77,0.88,0.05,91,2017,euphoric,0.01,0.07,0.26
+6,Spacewalk Thoughts,Orbit Bloom,ambient,chill,0.28,60,0.65,0.41,0.92,26,2020,dreamy,0.88,0.02,0.06
+7,Coffee Shop Stories,Slow Stereo,jazz,relaxed,0.37,90,0.71,0.54,0.89,37,2012,warm,0.74,0.08,0.14
+8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22,72,2016,nocturnal,0.11,0.05,0.20
+9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78,67,2022,focused,0.69,0.04,0.09
+10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35,83,2014,euphoric,0.09,0.06,0.19
+11,Funkytown Express,The Grooveliner,funk,energetic,0.85,112,0.75,0.88,0.12,79,2011,groovy,0.04,0.09,0.24
+12,Neon Cathedral,CyberPulse,synthwave,moody,0.68,95,0.45,0.62,0.25,55,2018,nocturnal,0.14,0.05,0.17
+13,Midnight Espresso,Caffeine High,jazz,focused,0.42,120,0.68,0.55,0.78,48,2013,focused,0.58,0.11,0.13
+14,Viking Thunder,Odin's Echo,metal,intense,0.96,165,0.32,0.45,0.02,22,2008,aggressive,0.02,0.07,0.28
+15,Retro Future,80s Kids,synthwave,happy,0.72,118,0.82,0.79,0.15,86,2010,euphoric,0.06,0.05,0.21
+16,Deep Space House,Orbital,house,chill,0.55,124,0.58,0.81,0.08,61,2019,dreamy,0.12,0.04,0.23
+17,Acoustic Morning,String Theory,folk,happy,0.38,88,0.72,0.52,0.92,44,2005,warm,0.83,0.03,0.12
+18,Gritty Streets,Concrete Jungle,hiphop,intense,0.88,92,0.55,0.85,0.18,74,2016,gritty,0.07,0.32,0.25
+19,Rainy Day Piano,Solitude,ambient,chill,0.15,65,0.42,0.35,0.98,18,2002,melancholic,0.91,0.02,0.05
+20,Sunset Groove,Summer Heat,funk,happy,0.78,110,0.88,0.82,0.10,82,2015,groovy,0.05,0.08,0.22
