@@ -82,7 +82,9 @@ A Diversity Penalty of -0.5 was added when an artist is already in the selected 
 
 In effect, this reduces artist repetition so recommendations feel less repetitive and more varied.
 
-### Visual Top Recommendations Summary Table: ![Dashboard Side-by-Side](assets/side_by_side_table.png)
+### Visual Top Recommendations Summary Table: 
+
+![Dashboard Side-by-Side](assets/side_by_side_table.png)
 
 A visual terminal summary was built using Rich, including scores and per-mode reasons.
 
