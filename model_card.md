@@ -51,13 +51,9 @@ Compared the outputs before and after a weight-shift experiment.
 That experiment showed that stronger energy weighting changed the ranking more than the genre weight did.
 Compared the catalog genre counts with the recommendation counts to look for repetition and bias.
 
-## Optional Extensions Implemented
+## Optional Extensions
 
-All 4 optional extension challenges were implemented.
-
-**Visual Top Recommendations Summary Table**: ![Dashboard Side-by-Side](assets/side_by_side_table.png)
-
-### Challenge 1: Advanced Song Features
+### Advanced Song Features
 
 The song data was expanded with additional features that were not in the baseline:
 
@@ -70,7 +66,7 @@ The song data was expanded with additional features that were not in the baselin
 
 In effect, the recommender now looks beyond just genre/mood/energy and can reward songs that better match a preferred era, detailed vibe, and audio texture profile.
 
-### Challenge 2: Multiple Scoring Modes
+### Multiple Scoring Modes
 
 Multiple scoring strategies were built so the same user can be ranked in different ways:
 
@@ -80,15 +76,15 @@ Multiple scoring strategies were built so the same user can be ranked in differe
 
 In effect, the recommender can behave like a "safe" mode, an "explore" mode, or a blend between the two.
 
-### Challenge 3: Diversity and Fairness Logic
+### Diversity and Fairness Logic
 
 A Diversity Penalty of -0.5 was added when an artist is already in the selected top-k list.
 
 In effect, this reduces artist repetition so recommendations feel less repetitive and more varied.
 
-### Challenge 4: Visual Summary Table
+### Visual Top Recommendations Summary Table: ![Dashboard Side-by-Side](assets/side_by_side_table.png)
 
-A visual side-by-side terminal summary was built using Rich, including scores and per-mode reasons.
+A visual terminal summary was built using Rich, including scores and per-mode reasons.
 
 In effect, songs can be quickly compared to see why they rank differently across Conservative, Discovery, and Hybrid modes without reading raw logs.
 
