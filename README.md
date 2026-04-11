@@ -52,7 +52,7 @@ pytest
 
 ## Recommendations (song titles, scores, and reasons)
 
-- ![Current recommendation output](assets/recommendation-output.png)
+![Current recommendation output](assets/recommendation-output.png)
 
 ## Evaluation Profiles
 
