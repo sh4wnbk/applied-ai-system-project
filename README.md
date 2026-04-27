@@ -42,15 +42,15 @@ The sequence diagram reflects the actual runtime flow across a single session. A
 
 ## 4. Agent Cast
 
-| Name | Instrument | Role | File |
-| --- | --- | --- | --- |
-| Cass | Sony Walkman | Input + Output | `nodes/` (main.py) |
-| Misty | Neumann U87 | Retrieve | `nodes/retrieve.py` |
-| Tempo | Metronome | Score | `nodes/score.py` |
-| Prestige | Technics SL-1200 | Explain + RAG | `nodes/explain.py` |
-| Hertz | VU Meter | Critique | `nodes/critique.py` |
-| Maestro | Command Desk | Orchestrate + Rank | `nodes/rerank.py` |
-| Base | Upright Bass | Narrator | `display/agents.py` |
+| Name | Role | File |
+| --- | --- | --- |
+| Cass | Input + Output | `nodes/` (main.py) |
+| Misty | Retrieve | `nodes/retrieve.py` |
+| Tempo | Score | `nodes/score.py` |
+| Prestige | Explain + RAG | `nodes/explain.py` |
+| Hertz | Critique | `nodes/critique.py` |
+| Maestro | Orchestrate + Rank | `nodes/rerank.py` |
+| Base | Narrator | `display/agents.py` |
 
 **Cass** opens and closes every session — the Sony Walkman is always the first thing and the last thing the listener sees.
 
