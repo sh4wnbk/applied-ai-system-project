@@ -94,21 +94,11 @@ pip install -r requirements.txt
 
 ### Step 3: Configure .env
 
-Copy the template and add real API keys:
-
 ```bash
-cp .env .env.local  # optional — or edit .env directly
+cp .env.example .env
 ```
 
-Edit `.env`:
-
-```env
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
-LASTFM_API_KEY=your_lastfm_api_key_here
-```
-
-- **Anthropic API key**: <https://console.anthropic.com>
-- **Last.fm API key**: <https://www.last.fm/api/account/create>
+Open `.env` and add your API keys. Two keys are required: an Anthropic key and a Last.fm key.
 
 ### Step 4: Run the recommender
 
