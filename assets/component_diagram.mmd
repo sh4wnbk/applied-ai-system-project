@@ -1,0 +1,94 @@
+---
+title: Music Recommender — Music Theory — Component Diagram
+---
+flowchart TD
+    USER([User\nTasteProfile])
+
+    subgraph EXT_SAFETY["External: Safety"]
+        OAI["OpenAI\nModeration API"]
+    end
+
+    subgraph EXT_DATA["External: Data Sources"]
+        LFM["Last.fm API\ntag · track data"]
+        RB["Radio Browser API\nstation directory · no auth"]
+    end
+
+    subgraph EXT_LLM["External: LLM Runtime"]
+        HAIKU["Anthropic Claude API\nclaude-haiku-4-5"]
+        SONNET["Anthropic Claude API\nclaude-sonnet-4-6"]
+    end
+
+    subgraph SYSTEM["Music Theory System"]
+
+        GK["Gatekeeper\ndisplay/gatekeeper.py\n─────────────────\nNormalise · Moderate · Gate"]
+
+        CASS_IN["Cass — Input\nmain.py\n─────────────────\nLog session start\nInit AgentState"]
+
+        subgraph GRAPH["LangGraph State Machine  (graph.py)"]
+            direction TB
+
+            MISTY["Misty — Retrieve\nnodes/retrieve.py\n─────────────────\nParallel HTTP fetch\nMerge + filter catalog"]
+
+            TEMPO["Tempo — Score\nnodes/score.py\n─────────────────\nCosine similarity\n(no LLM — numpy only)"]
+
+            PRESTIGE["Prestige — Explain\nnodes/explain.py\n─────────────────\nGlass Box explanations\nclaude-sonnet-4-6"]
+
+            HERTZ["Hertz — Critique\nnodes/critique.py\n─────────────────\nEvaluate quality\nclaude-haiku-4-5"]
+
+            MAESTRO["Maestro — Rerank\nnodes/rerank.py\n─────────────────\nSelect trajectory\nclaude-haiku-4-5"]
+
+            STATE[("AgentState\nShared state\nthreading all nodes")]
+
+            MISTY --> STATE
+            STATE --> TEMPO
+            TEMPO --> STATE
+            STATE --> PRESTIGE
+            PRESTIGE --> STATE
+            STATE --> HERTZ
+            HERTZ -->|"loop_back = True\nloop_count &lt; 3"| MISTY
+            HERTZ --> STATE
+            STATE --> MAESTRO
+        end
+
+        CASS_OUT["Cass — Output\nmain.py\n─────────────────\nRender trajectory\nGlass Box display"]
+
+        LOG[("logs/session.log\naudit trail")]
+
+    end
+
+    USER -->|"TasteProfile\n(text fields)"| GK
+    GK <-->|"normalize · check"| OAI
+    GK -->|"cleared profile"| CASS_IN
+    GK -->|"blocked: log + exit"| LOG
+
+    CASS_IN --> MISTY
+    CASS_IN --> LOG
+
+    MISTY <-->|"tag.gettoptracks\ntrack.gettoptags"| LFM
+    MISTY <-->|"stations/search"| RB
+    MISTY --> LOG
+
+    PRESTIGE <-->|"Glass Box prompt\ntool_use structured output"| SONNET
+    PRESTIGE --> LOG
+
+    HERTZ <-->|"quality evaluation\ntool_use structured output"| HAIKU
+    HERTZ --> LOG
+
+    MAESTRO <-->|"trajectory selection\ntool_use structured output"| HAIKU
+    MAESTRO --> LOG
+
+    MAESTRO --> CASS_OUT
+    CASS_OUT -->|"5-song trajectory\nGlass Box explanations"| USER
+    CASS_OUT --> LOG
+
+    style GK fill:#c62828,color:#fff
+    style CASS_IN fill:#37474f,color:#fff
+    style CASS_OUT fill:#37474f,color:#fff
+    style MISTY fill:#006064,color:#fff
+    style TEMPO fill:#6a1b9a,color:#fff
+    style PRESTIGE fill:#f57f17,color:#fff
+    style HERTZ fill:#2e7d32,color:#fff
+    style MAESTRO fill:#1565c0,color:#fff
+    style STATE fill:#263238,color:#fff
+    style LOG fill:#4e342e,color:#fff
+    style USER fill:#1a237e,color:#fff

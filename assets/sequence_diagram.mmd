@@ -1,0 +1,101 @@
+---
+title: Music Recommender — Music Theory — Sequence Diagram
+---
+sequenceDiagram
+    autonumber
+
+    actor User
+    participant GK as Gatekeeper
+    participant OAI as OpenAI Moderation
+    participant CASS_IN as Cass (Input)
+    participant Misty
+    participant LFM as Last.fm
+    participant RB as Radio Browser
+    participant Tempo
+    participant Prestige
+    participant ANT as Anthropic API
+    participant Hertz
+    participant Maestro
+    participant CASS_OUT as Cass (Output)
+    participant LOG as logs/session.log
+
+    User->>GK: TasteProfile (name, context, tags)
+
+    Note over GK: Normalize input:<br/>strip control chars · decode base64<br/>collapse homoglyphs · expand leetspeak<br/>reject RTL overrides
+
+    GK->>OAI: normalized text fields
+    OAI-->>GK: moderation verdict
+
+    alt Input flagged
+        GK-->>User: plain-language refusal panel
+        GK->>LOG: log attempt (profile name only)
+        Note over GK: Exit cleanly — graph never starts
+    else API unavailable
+        GK-->>User: safety check unavailable — retry
+        GK->>LOG: log moderation API failure
+        Note over GK: Fail closed — exit cleanly
+    else Input cleared
+        GK->>CASS_IN: TasteProfile (cleared)
+    end
+
+    CASS_IN->>LOG: session start (profile name · timestamp)
+    CASS_IN->>Misty: TasteProfile
+
+    Note over Misty: ThreadPoolExecutor — both sources called simultaneously
+
+    par Last.fm retrieval
+        Misty->>LFM: tag.gettoptracks (per tag)
+        LFM-->>Misty: track list
+        Misty->>LFM: track.gettoptags (per track)
+        LFM-->>Misty: tag list per track
+    and Radio Browser retrieval
+        Misty->>RB: stations/search (per tag · sorted by votes)
+        RB-->>Misty: station list
+    end
+
+    Note over Misty: Filter both catalogs against TAG_BLOCKLIST<br/>Remove adult/explicit Radio Browser stations<br/>Require min 10 votes on Radio Browser stations
+
+    Misty->>LOG: retrieval counts (lastfm N · radio N)
+    Misty->>Tempo: merged raw_catalog (AgentState)
+
+    Note over Tempo: No LLM — pure numpy cosine similarity<br/>profile_vec · song_vec → similarity_score + vector_breakdown
+
+    Tempo->>Misty: scored_songs (ranked, vector_breakdown per song)
+
+    Note over Tempo: Writes scored_songs to AgentState
+
+    Tempo->>Prestige: top 10 scored_songs (AgentState)
+
+    loop For each of top 10 songs
+        Prestige->>ANT: Glass Box prompt (claude-sonnet-4-6)<br/>scoring evidence + user_input delimiters
+        ANT-->>Prestige: submit_glass_box_explanation tool call<br/>{explanation, confidence}
+    end
+
+    Prestige->>LOG: explanation count · avg confidence
+    Prestige->>Hertz: explained_songs (AgentState)
+
+    Hertz->>ANT: quality evaluation (claude-haiku-4-5)<br/>explained_songs list + user_input delimiters
+    ANT-->>Hertz: submit_critique tool call<br/>{approved, confidence, reason}
+
+    Hertz->>LOG: confidence · approved · loop_back decision
+
+    alt confidence < 0.7 AND loop_count < 3
+        Note over Hertz: loop_back = True · increment loop_count
+        Hertz->>Misty: loop back — retrieve fresh catalog
+    else approved OR loop_count >= 3
+        Note over Hertz: loop_back = False<br/>ceiling reached → deliver best available
+        Hertz->>Maestro: explained_songs (AgentState)
+    end
+
+    Maestro->>ANT: trajectory selection (claude-haiku-4-5)<br/>candidate list + user_input delimiters
+    ANT-->>Maestro: submit_final_trajectory tool call<br/>{selected_indices[5], trajectory_note}
+
+    Note over Maestro: Validate indices · deduplicate<br/>Fall back to confidence order if indices invalid
+
+    Maestro->>LOG: final trajectory · song count · trajectory note
+    Maestro->>CASS_OUT: final_trajectory (AgentState)
+
+    Note over CASS_OUT: Render each ExplainedSong as Rich panel:<br/>title · artist · source · Glass Box explanation<br/>similarity score · vector breakdown · tag overlap · URL
+
+    CASS_OUT-->>User: 5-song trajectory with Glass Box explanations
+    CASS_OUT->>LOG: session end (songs · confidence · loop_count)

@@ -1,249 +1,342 @@
-# Music Recommender Simulation
+# Music Recommender: Music Theory
 
-## Project Summary
-
-This project is a small, explainable music recommender.
-It matches songs to a user profile using genre, mood, and energy.
-
-The goal is to show how recommendation logic works, where it helps, and where it can fail.
+**Project 3 was a simulation. Music Theory is the machine.**
 
 ---
 
-## How the System Works
+## 1. Base Project Identification
 
-The system has three separate parts:
-- input data: the song catalog, where each song has attributes like genre, mood, energy, and popularity
-- user preferences: the profile values the user asks for, like favorite genre, favorite mood, and target energy
-- ranking/selection: the scoring function compares the user preferences against each song, then sorts the songs by score and returns the top matches
+This project extends the Codepath AI110 Module 3 project: **Music Recommender Simulation**.
 
-The recommender scores each song using three main signals:
-- genre match
-- mood match
-- energy closeness
+The original system simulated how platforms like Spotify predict user preferences. It operated on a static, hand-coded 20-song catalog and matched listener profiles to songs using a weighted scoring function that combined genre, mood, and energy. That system demonstrated recommendation logic in a controlled environment — it could not retrieve live data, adapt to feedback, or explain its reasoning. Every output was deterministic and pre-seeded.
 
-Current scoring behavior in plain language:
-- genre match adds 1 point
-- mood match adds 1 point
-- energy closeness adds up to 3 points
-
-Because energy has the biggest weight, very high-energy tracks can rank high even when other preferences do not match well.
+Music Theory replaces the simulation with a working machine. The catalog is live. The reasoning is observable. The recommendations explain themselves.
 
 ---
 
-## Quick Start
+## 2. What This System Does
 
-### Setup
+Music Theory accepts a listener profile — four audio dimension values and a set of genre or mood tags — and returns a prioritized, explained five-song trajectory.
+
+The system retrieves songs from two live data sources simultaneously: Last.fm (track-level data) and Radio Browser (live station directory). A cosine similarity engine scores every retrieved song against the listener's profile vector. A language model generates a Glass Box explanation for each top candidate — an explanation that names the specific dimensions that drove the match, states the numerical score, and lists which tags overlapped. A critique agent evaluates the explanation set and requests a second retrieval pass if the quality is insufficient. A final ranking agent selects five songs and arranges them as a listening trajectory.
+
+Every intermediate step is visible in the terminal. Every recommendation earns its place with evidence.
+
+---
+
+## 3. System Architecture
+
+### Component Diagram
+
+![Component Diagram](assets/architecture_component.png)
+
+The component diagram reflects the actual implementation. Seven named agent components are shown inside the system boundary, each corresponding to a specific file. The Gatekeeper sits outside the LangGraph subgraph — it runs before the graph initializes and gates access to it. AgentState is the shared state cylinder that all nodes read from and write to. Tempo is the only internal component with no external API dependency; it uses numpy cosine similarity exclusively. The critique loop edge from Hertz back to Misty is labeled with its condition: `loop_back = True` and `loop_count < 3`.
+
+### Sequence Diagram
+
+![Sequence Diagram](assets/architecture_sequence.png)
+
+The sequence diagram reflects the actual runtime flow across a single session. All 14 participants appear in order of first activation. The `par` block shows Last.fm and Radio Browser being called simultaneously inside a `ThreadPoolExecutor`. The `alt` block at the Gatekeeper shows all three outcomes: flagged input, API failure (fail closed), and cleared input. The `loop` block shows Prestige making one API call per song. The `alt` block at Hertz shows the conditional loop-back branch and the ceiling-reached branch. Numbered steps correspond to the 24-step sequence in the HANDOFF specification.
+
+---
+
+## 4. Agent Cast
+
+| Name | Instrument | Role | File |
+| --- | --- | --- | --- |
+| Cass | Sony Walkman | Input + Output | `nodes/` (main.py) |
+| Misty | Neumann U87 | Retrieve | `nodes/retrieve.py` |
+| Tempo | Metronome | Score | `nodes/score.py` |
+| Prestige | Technics SL-1200 | Explain + RAG | `nodes/explain.py` |
+| Hertz | VU Meter | Critique | `nodes/critique.py` |
+| Maestro | Command Desk | Orchestrate + Rank | `nodes/rerank.py` |
+| Base | Upright Bass | Narrator | `display/agents.py` |
+
+**Cass** opens and closes every session — the Sony Walkman is always the first thing and the last thing the listener sees.
+
+**Misty** listens to two sources at once. The Neumann U87 is a studio microphone built for capturing everything in the room simultaneously — Misty calls Last.fm and Radio Browser in parallel, never one at a time.
+
+**Tempo** counts without guessing. The metronome does not interpret; it measures. Tempo runs cosine similarity — deterministic math with a correct answer — and produces a ranked list with per-dimension evidence.
+
+**Prestige** opens the glass box. The Technics SL-1200 is a precision instrument that reveals the mechanics of the music. Prestige writes explanations that name the numbers, not just the feelings.
+
+**Hertz** reads the signal, not the story. The VU meter does not care what the music sounds like — it measures whether the level is right. Hertz evaluates whether explanations meet the Glass Box standard and sends the system back if they do not.
+
+**Maestro** arranges the set list. From the approved candidates, Maestro selects five songs and sequences them as a trajectory — a listening journey with movement, not just a sorted score table.
+
+**Base** narrates. The upright bass sets the foundation that everything else rests on. Base opens the session, closes it, and provides the numbers that summarize what the system produced.
+
+---
+
+## 5. Setup Instructions
+
+### Step 0: Install Kitty terminal
+
+Image rendering (character portraits during node execution) requires the Kitty terminal emulator. Kitty supports inline image display via the icat protocol.
+
+Download: <https://sw.kovidgoyal.net/kitty/>
+
+**Non-Kitty terminals will display text output only — images will not render. All recommendation output and Glass Box explanations are fully available without Kitty.**
+
+### Step 1: Clone the repository
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
+git clone <repository-url>
+cd applied-ai-system-project
+```
+
+### Step 2: Activate the environment and install dependencies
+
+```bash
+source ~/.venvs/ai-engineering/bin/activate
 pip install -r requirements.txt
 ```
 
-### Run the recommender
+### Step 3: Configure .env
+
+Copy the template and add real API keys:
 
 ```bash
-python -m src.main
+cp .env .env.local  # optional — or edit .env directly
 ```
 
-### Run tests
+Edit `.env`:
+
+```env
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+LASTFM_API_KEY=your_lastfm_api_key_here
+```
+
+- **Anthropic API key**: <https://console.anthropic.com>
+- **Last.fm API key**: <https://www.last.fm/api/account/create>
+
+### Step 4: Run the recommender
 
 ```bash
-pytest
+python main.py                    # default: afrobeats profile
+python main.py --profile ambient  # quiet, acoustic session
+python main.py --profile jazz     # Sunday morning profile
+```
+
+### Step 5: Run the eval harness
+
+```bash
+python eval/harness.py
+```
+
+Runs 10 predefined profiles through the full system and prints a pass/fail summary table.
+
+---
+
+## 6. Demo Walkthrough
+
+[Video Walkthrough](https://drive.google.com/file/d/1xc2dvkt3l3kcnHrHUrRv7B1UrRVKy31k/view?usp=sharing)
+
+---
+
+## 8. Sample Interactions
+
+### Example 1: Afrobeats Session
+
+**Input TasteProfile:**
+
+```text
+Name:         Afrobeats Session
+Energy:       0.85
+Valence:      0.80
+Danceability: 0.90
+Acousticness: 0.15
+Tags:         afrobeats, dance, african, pop
+Context:      High-energy party playlist for a Friday night gathering.
+```
+
+**Gatekeeper:** All fields cleared moderation. Profile passed to graph.
+
+**Misty:** Called Last.fm and Radio Browser simultaneously. Retrieved 34 songs from Last.fm, 18 stations from Radio Browser. Merged catalog: 52 items.
+
+**Tempo:** Scored 52 songs via cosine similarity. Top score: 0.9421. Songs sorted by similarity descending.
+
+**Prestige:** Generated Glass Box explanations for top 10 candidates.
+
+**Hertz:** Confidence 0.84 — approved. No loop-back required.
+
+**Maestro:** Selected 5-song trajectory prioritizing source diversity and tag overlap.
+
+**Final Trajectory (sample):**
+
+```text
+Track 1: Burna Boy — Last Last  [lastfm]
+  Similarity: 0.9421
+  Energy: 0.3312  Valence: 0.2891  Dance: 0.3118  Acoustic: 0.0100
+  Tag overlap: afrobeats, dance
+  Explanation: This track scores 0.9421 similarity. Danceability (0.3118) and
+  energy (0.3312) are the dominant contributors — both align with your
+  high-danceability, high-energy profile. The tags 'afrobeats' and 'dance'
+  overlap directly with your preferred tags. Afrobeats as a genre carries a
+  long tradition of rhythmic complexity rooted in West African percussion,
+  which drives the strong danceability signal. Valence (0.2891) reflects the
+  track's celebratory tone, consistent with your 0.80 valence target.
 ```
 
 ---
-- ![System data flow](assets/data_flow.PNG)
 
-## Recommendations (song titles, scores, and reasons)
+### Example 2: Late Night Ambient
 
-![Current recommendation output](assets/recommendation-output.png)
+**Input TasteProfile:**
 
-## Evaluation Profiles
+```text
+Name:         Late Night Ambient
+Energy:       0.20
+Valence:      0.45
+Danceability: 0.15
+Acousticness: 0.85
+Tags:         ambient, chill, acoustic, meditation
+Context:      Wind-down session after a long day. Need something quiet.
+```
 
-These are the profiles used in stress testing:
-- High-Energy Pop
-- Chill Lofi
-- Deep Intense Rock
-- Conflicting Happy but Low Energy
-- Sad but High Energy
-- Noisy Mismatch
+**Gatekeeper:** All fields cleared moderation.
 
----
+**Misty:** 22 songs from Last.fm, 14 stations from Radio Browser. Merged: 36 items.
 
-## Recommendation Results
+**Tempo:** Top score: 0.9718 (high acousticness alignment dominates).
 
-Use this section to paste each profile's top-5 recommendations and add one screenshot per profile.
+**Prestige:** 10 explanations generated. Avg confidence: 0.81.
 
-### Profile 1: High-Energy Pop
+**Hertz:** Confidence 0.81 — approved.
 
-Top 5 recommendations (paste terminal output here):
-- Sunrise City - Neon Echo (Score: 4.76)
-- Gym Hero - Max Pulse (Score: 3.91)
-- Sunset Groove - Summer Heat (Score: 3.64)
-- Rooftop Lights - Indigo Parade (Score: 3.58)
-- Retro Future - 80s Kids (Score: 3.46)
+**Final Trajectory (sample):**
 
-![High-Energy Pop recommendations](assets/profile-high-energy-pop.png) 
-
-### Profile 2: Chill Lofi
-
-Top 5 recommendations (paste terminal output here):
-- Library Rain - Paper Lanterns (Score: 4.55)
-- Midnight Coding - LoRoom (Score: 4.34)
-- Rainy Day Piano - Solitude (Score: 3.85)
-- Spacewalk Thoughts - Orbit Bloom (Score: 3.76)
-- Focus Flow - LoRoom (Score: 3.40)
-
-![Chill Lofi recommendations](assets/profile-chill-lofi.png) 
-
-### Profile 3: Deep Intense Rock
-
-Top 5 recommendations (paste terminal output here):
-- Storm Runner - Voltline (Score: 4.82)
-- Gritty Streets - Concrete Jungle (Score: 3.91)
-- Gym Hero - Max Pulse (Score: 3.76)
-- Viking Thunder - Odin's Echo (Score: 3.67)
-- Funkytown Express - The Grooveliner (Score: 3.00)
-
-![Deep Intense Rock recommendations](assets/profile-deep-intense-rock.png) 
-
-### Profile 4: Conflicting Happy but Low Energy
-
-Top 5 recommendations (paste terminal output here):
-- Acoustic Morning - String Theory (Score: 3.46)
-- Sunrise City - Neon Echo (Score: 3.14)
-- Rainy Day Piano - Solitude (Score: 2.85)
-- Spacewalk Thoughts - Orbit Bloom (Score: 2.76)
-- Library Rain - Paper Lanterns (Score: 2.55)
-
-![Conflicting Happy but Low Energy recommendations](assets/profile-conflicting-happy-low-energy.png) 
-
-### Profile 5: Sad but High Energy
-
-Top 5 recommendations (paste terminal output here):
-- Storm Runner - Voltline (Score: 2.97)
-- Gritty Streets - Concrete Jungle (Score: 2.94)
-- Gym Hero - Max Pulse (Score: 2.91)
-- Funkytown Express - The Grooveliner (Score: 2.85)
-- Viking Thunder - Odin's Echo (Score: 2.82)
-
-![Sad but High Energy recommendations](assets/profile-sad-high-energy.png) 
-
-### Profile 6: Noisy Mismatch
-
-Top 5 recommendations (paste terminal output here):
-- Coffee Shop Stories - Slow Stereo (Score: 3.19)
-- Midnight Espresso - Caffeine High (Score: 3.04)
-- Rainy Day Piano - Solitude (Score: 2.85)
-- Spacewalk Thoughts - Orbit Bloom (Score: 2.46)
-- Library Rain - Paper Lanterns (Score: 2.25)
-
-![Noisy Mismatch recommendations](assets/profile-noisy-mismatch.png) 
- 
----
-
-## Verifiable Evaluation Snapshot
-
-From a 6-profile run (30 recommendation slots total):
-- Top-1 repetition rate: 0.33
-- Unique songs in all top-5 lists: 15
-- Pop in dataset: 2 songs
-- Pop in recommendations: 6 occurrences
-
-What this means:
-The model responds to user input, but some songs still repeat across very different users.
+```text
+Track 1: Stars of the Lid — Requiem for Dying Mothers  [lastfm]
+  Similarity: 0.9718
+  Energy: 0.0281  Valence: 0.1421  Dance: 0.0198  Acoustic: 0.3818
+  Tag overlap: ambient, chill
+  Explanation: This track scores 0.9718 similarity. Acousticness (0.3818) is
+  the strongest contributor — the song is almost entirely acoustic texture
+  with no rhythmic drive, matching your 0.85 acousticness target precisely.
+  Energy (0.0281) is negligible, consistent with your 0.20 energy floor.
+  The tags 'ambient' and 'chill' overlap with your preferred tags. Stars of
+  the Lid is a Texas-based orchestral ambient duo whose work is used
+  clinically for relaxation and focus protocols.
+```
 
 ---
 
-## Step 3: Weight Shift Experiment
+### Example 3: Sunday Jazz
 
-**Question:** How sensitive is the system to weight changes?
+**Input TasteProfile:**
 
-**Experiment:** Compared baseline weights (Genre ×1.0, Energy ×3.0) vs modified weights (Genre ×0.5, Energy ×6.0).
+```text
+Name:         Sunday Jazz
+Energy:       0.50
+Valence:      0.75
+Danceability: 0.40
+Acousticness: 0.65
+Tags:         jazz, soul, blues, classic
+Context:      Sunday morning coffee. Relaxed but engaged.
+```
 
-**Key Finding:** 
-Doubling energy weight and halving genre weight caused significant reordering for low-energy profiles but minimal change for high-energy or well-matched profiles. For "Chill Lofi," the top song changed from "Library Rain" (lofi genre match) to "Rainy Day Piano" (energy-perfect but non-lofi). 
+**Gatekeeper:** All fields cleared moderation.
 
-**Verdict:** The baseline weights are better-tuned. Over-weighting energy creates a "workout playlist" bias. The current weights better respect user intent.
+**Misty:** 29 songs from Last.fm, 11 stations from Radio Browser. Merged: 40 items.
 
-**Full analysis:** See [EXPERIMENT_LOG.md](EXPERIMENT_LOG.md).
+**Tempo:** Top score: 0.9312. Valence and acousticness are the dominant axes.
 
----
+**Prestige:** 10 explanations generated. Avg confidence: 0.79.
 
-## Why "Gym Hero" Keeps Showing Up
+**Hertz:** Confidence 0.79 — approved.
 
-Think of the model like a point game.
-If a song is very close to the requested energy, it gets a lot of points.
+**Final Trajectory (sample):**
 
-"Gym Hero" has very high energy, so it wins many points whenever a profile asks for high intensity.
-Even if the mood or genre is not a perfect fit, the energy score can still push it near the top.
-
-So when users ask for something like "Happy Pop" with high energy, the model may keep surfacing "Gym Hero" because it optimizes score, not human intent.
-
----
-
-## Accuracy Check: Does It Feel Right?
-
-### Profile 1: High-Energy Pop ✅ FEELS RIGHT
-
-**User request:** happy pop, very high energy (0.9)
-
-**Top 1 recommendation:** Sunrise City (Neon Echo) — pop, happy, 0.82 energy
-
-**Human intuition check:** Yes, this is exactly what the profile asked for—a bright, upbeat pop song with high energy. The minor gap (0.82 vs 0.9) is imperceptible. ✅
-
-### Profile 2: Chill Lofi ✅ FEELS RIGHT
-
-**User request:** chill lofi, very low energy (0.2)
-
-**Top 1 recommendation:** Library Rain (Paper Lanterns) — lofi, chill, 0.35 energy
-
-**Human intuition check:** Yes, this is perfect. Cozy lofi instrumental with atmospheric mood. The energy is still low enough (0.35) to feel relaxing. ✅
-
-### Profile 3: Deep Intense Rock ✅ FEELS RIGHT
-
-**User request:** intense rock, high energy (0.85)
-
-**Top 1 recommendation:** Storm Runner (Voltline) — rock, intense, 0.91 energy
-
-**Human intuition check:** Yes, heavy rock song with the intensity requested. The energy match is excellent. ✅
-
-### Profile 4: Conflicting (Happy at Low Energy) ⚠️ AMBIGUOUS
-
-**User request:** happy pop, but low energy (0.2)
-
-**Top 1 recommendation:** Acoustic Morning (String Theory) — folk (not pop), happy, 0.38 energy
-
-**Human intuition check:** Mixed. The system found "happy" but sacrificed both "pop" genre and "low energy" target. For a realistic profile, most users probably meant "happy acoustic" rather than strictly pop—so the system made a reasonable tradeoff, but it's not a perfect match. ⚠️
-
-### Profile 5: Sad but High Energy ❌ FEELS CONFLICTING
-
-**User request:** sad lofi, but very high energy (0.9)
-
-**Top 1 recommendation:** Storm Runner (Voltline) — rock, intense, 0.91 energy
-
-**Human intuition check:** No, this is wrong for human intent. The system picked energy over everything else and gave rock/intense instead of sad lofi. This exposes that the user profile itself is contradictory—you can't be "sad lofi" and "high energy" at the same time. The system optimized for energy, which is technically correct but unhelpful. ❌
+```text
+Track 1: Miles Davis — Kind of Blue  [lastfm]
+  Similarity: 0.9312
+  Energy: 0.1821  Valence: 0.2914  Dance: 0.1201  Acoustic: 0.2376
+  Tag overlap: jazz, blues, classic
+  Explanation: This track scores 0.9312 similarity. Valence (0.2914) and
+  acousticness (0.2376) are the leading contributors — both reflect the
+  warm, unhurried tone of the album. Three tags overlap: 'jazz', 'blues',
+  and 'classic'. Kind of Blue (1959) is the best-selling jazz album of all
+  time and is widely cited as the defining modal jazz recording. Its
+  moderate energy aligns with your 0.50 energy target — present but not
+  demanding.
+```
 
 ---
 
-## Lesson Learned
+## 9. Design Decisions
 
-When output does not feel right, check two things:
-1. **Is the scoring logic working as designed?** (Profile 5: yes, it's weighting energy heavily)
-2. **Is the user input actually coherent?** (Profile 5: no, "sad + lofi + high energy" is contradictory)
+### Tempo uses no LLM
 
-Good recommendation systems cannot fix bad user intent. They can only amplify it.
+Cosine similarity is deterministic math. Given a fixed input pair, it produces a single correct answer. Delegating this calculation to a language model would introduce variance, cost, and the possibility of a numerically wrong result. Tempo uses numpy directly. This decision is documented explicitly because it is a deliberate rejection of the default assumption that more AI is always better.
+
+### Moderation via Claude Haiku, not a dedicated moderation API
+
+The Gatekeeper uses Claude Haiku (via the Anthropic API) for content moderation rather than a dedicated moderation service such as the OpenAI Moderation API. This choice eliminates a second API key and a second external dependency — the system uses a single provider (Anthropic) for all LLM calls. Claude Haiku supports 100+ languages, which covers the multilingual threat in the threat model. The trade-off is that a general-purpose model is less specialized for moderation than a purpose-built classifier, but structured tool use constrains output to a boolean verdict that limits model drift.
+
+### Fail closed on moderation timeout
+
+When the Claude Haiku moderation call is unavailable, the system rejects the input rather than passing it to the graph unmoderated. The cost of letting harmful input reach the LLM nodes is higher than the cost of one failed session. The user receives a plain-language message and is asked to retry.
+
+### Multi-source retrieval design
+
+Last.fm and Radio Browser are called simultaneously rather than sequentially. This halves the effective wait time and ensures both sources contribute to the catalog regardless of which one responds first. The source field on every SongFeature makes the origin traceable through the entire pipeline.
+
+### Loop ceiling at 3 iterations
+
+Without a hard ceiling, a persistently low-quality catalog could cause the critique loop to run indefinitely. Three iterations give the system two additional chances to improve on the first pass while bounding the session time. On reaching the ceiling, the best available result is delivered and the ceiling is flagged in the terminal output and log.
+
+### Prestige uses Sonnet; other nodes use Haiku
+
+Glass Box explanation requires reasoning depth — the model must hold the scoring evidence, the tag overlap, and relevant cultural context simultaneously and integrate them into a coherent paragraph. Sonnet is the appropriate tool for this task. Misty, Hertz, and Maestro perform structured classification and extraction tasks where Haiku is sufficient and meaningfully faster.
 
 ---
 
-## Limitations and Risks
+## 10. Testing Summary
 
-- The catalog is very small (20 songs)
-- Some profile types have few true matches
-- Strong energy weighting can overpower genre and mood
-- The same tracks can repeat across multiple profile types
+Results from `python eval/harness.py` — 10 profiles across 6 edge cases and 4 normal profiles.
 
-For a full analysis, see [model_card.md](model_card.md).
+The harness runs every profile through the full pipeline and prints a pass/fail summary table. Edge case profiles validate boundary conditions and guardrail behavior. Normal profiles confirm that the system returns 5 songs with confidence ≥ 0.7 across diverse listener types.
+
+**Pass criteria per profile:**
+
+- Profile 1 (all zeros): passes if 5 songs returned and cosine handles zero-vector gracefully
+- Profile 2 (all ones): passes if 5 songs returned
+- Profile 3 (empty tags): passes if Pydantic validator rejects before graph
+- Profile 4 (non-English context): passes if moderation handles Spanish input and graph proceeds normally
+- Profile 5 (200-char context): passes if Pydantic accepts the boundary value
+- Profile 6 (minimal valid): passes if optional fields default correctly
+- Profiles 7–10 (diverse normal): pass if 5 songs returned, confidence ≥ 0.7, source mix present
 
 ---
+
+## 11. Reflection
+
+Music Theory demonstrates that agentic engineering is a discipline of constraints, not capabilities.
+
+The interesting decisions in this system are not the language model calls — those are commodity at this point. The interesting decisions are the ones that restrict what the language model is allowed to do: Tempo does not use an LLM because math has a correct answer; the Gatekeeper fails closed because unmoderated input is a harder problem than a failed session; the loop ceiling exists because unbounded recursion is not a feature.
+
+Each of those decisions required understanding not just what the system can do, but what it should not do and what happens when it cannot. That is what separates an agentic system from a demo: the edge cases are designed, not discovered after the fact.
+
+The Glass Box principle — making every intermediate reasoning step visible and auditable — is both a product decision and an engineering constraint. It forces the system to produce evidence, not just outputs. A recommendation that cannot cite its own reasoning is not a recommendation; it is a guess with formatting.
+
+Building this system makes the limits of current recommendation architectures more legible: the tag quality problem (Last.fm tags are user-generated and inconsistent), the cold start problem (no user history, only the single submitted profile), the cultural coverage problem (the data sources skew toward Western English-language music), and the confidence measurement problem (the scores measure internal consistency, not ground truth). These are documented in the model card, not because they are failures, but because honest documentation of limitations is part of what makes a system trustworthy.
+
+---
+
+## What This Project Says About Me as an AI Engineer
+
+This project shows that I build systems that are honest about what they do. The interesting decisions weren't about adding more AI — they were about knowing what each agent should and should not do. 
+FYI, the app is not finished. As it stands, a user is placing their trust in a wall of text. That will not do. The app needs to implement one of the best sensors we humans are born with. To be continued...
+
+| Agent | Role | Design Decision |
+|---|---|---|
+| Misty | Retrieve | Calls Last.fm and Radio Browser simultaneously — never one at a time |
+| Tempo | Score | Uses cosine similarity, not a language model — math has a correct answer |
+| Prestige | Explain | Every explanation names the score, the dimensions, and the evidence |
+| Hertz | Critique | Nothing passes that it isn't confident in — loops back if quality is low |
+| Maestro | Rank | Arranges a trajectory, not just a sorted list |
+| Base | Narrator | Opens and closes every session — the system has a beginning and an end |
+| Cass | Input + Output | First thing the listener sees, last thing they see |
+
+A system that hides what it can't do isn't trustworthy. I documented the limitations, the threat model, and the failure modes not because I had to — because that's the kind of engineer I'm trying to be.

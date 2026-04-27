@@ -1,4 +1,30 @@
-pandas
-pytest
-streamlit
-rich
+# Music Recommender: Music Theory
+# Install: pip install -r requirements.txt
+
+# Agentic framework
+langgraph>=0.2
+langchain-core>=0.3
+
+# LLM runtime
+anthropic>=0.40
+
+# Data validation
+pydantic>=2.0
+
+# Retrieval — HTTP clients
+requests>=2.31
+
+# Scoring — cosine similarity
+numpy>=1.26
+
+# Terminal UI
+rich>=13.0
+
+# Environment variable loading
+python-dotenv>=1.0
+
+# Retry with exponential backoff
+tenacity>=8.2
+
+# Testing
+pytest>=7.0

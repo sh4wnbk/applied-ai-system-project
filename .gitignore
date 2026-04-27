@@ -1,6 +1,13 @@
+# Environment — never commit API keys
+.env
+
+# Logs — session data is gitignored by design
+logs/
+
 # Byte compiled
 __pycache__/
 *.py[cod]
+*.pyc
 *.pyo
 
 # Virtual environments
@@ -16,3 +23,14 @@ venv/
 
 # Local handoff notes
 HANDOFF.md
+
+# Agent character portraits — local assets only
+assets/cass.jpg
+assets/cass.png
+assets/misty.jpg
+assets/misty.png
+assets/hertz.jpg
+assets/maestro.jpg
+assets/prestige.jpg
+assets/tempo.jpg
+assets/base.jpg
