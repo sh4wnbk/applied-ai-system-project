@@ -24,6 +24,10 @@ venv/
 # Local handoff notes
 HANDOFF.md
 
+# Module 3 artifacts — not part of this system
+EXPERIMENT_LOG.md
+reflection.md
+
 # Agent character portraits — local assets only
 assets/cass.jpg
 assets/cass.png
