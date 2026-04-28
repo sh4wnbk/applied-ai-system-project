@@ -59,6 +59,7 @@ EXAMPLE_PROFILES: dict[str, TasteProfile] = {
         acousticness=0.15,
         preferred_tags=["afrobeats", "dance", "african", "pop"],
         context="High-energy party playlist for a Friday night gathering.",
+        target_bpm=100.0,
     ),
     "ambient": TasteProfile(
         name="Late Night Ambient",
@@ -95,13 +96,25 @@ def _parse_args() -> argparse.Namespace:
         default=DEFAULT_PROFILE,
         help=f"Built-in taste profile to use (default: {DEFAULT_PROFILE})",
     )
+    parser.add_argument(
+        "--mastermix",
+        action="store_true",
+        default=False,
+        help=(
+            "Enable MasterMix mode: filter candidates within ±5 BPM of the profile's "
+            "target_bpm before final trajectory selection. Requires target_bpm to be "
+            "set in the selected profile."
+        ),
+    )
     return parser.parse_args()
 
 
-def _print_cass_input(profile: TasteProfile) -> None:
+def _print_cass_input(profile: TasteProfile, mastermix_mode: bool = False) -> None:
     """Render Cass's input panel displaying the active TasteProfile."""
     render_character_panel("Cass")
     tags = ", ".join(profile.preferred_tags)
+    bpm_line = f"  Target BPM:   [yellow]{profile.target_bpm}[/yellow]\n" if profile.target_bpm is not None else ""
+    mastermix_line = "  MasterMix:    [yellow]ON — ±5 BPM filter active[/yellow]\n" if mastermix_mode else ""
     console.print(
         Panel(
             f"Profile loaded: [cyan]{profile.name}[/cyan]\n\n"
@@ -109,8 +122,10 @@ def _print_cass_input(profile: TasteProfile) -> None:
             f"  Valence:      [magenta]{profile.valence}[/magenta]\n"
             f"  Danceability: [magenta]{profile.danceability}[/magenta]\n"
             f"  Acousticness: [magenta]{profile.acousticness}[/magenta]\n"
+            f"{bpm_line}"
             f"  Tags:         [green]{tags}[/green]\n"
-            f"  Context:      [dim]{profile.context or 'none'}[/dim]",
+            f"  Context:      [dim]{profile.context or 'none'}[/dim]\n"
+            f"{mastermix_line}",
             title="[bright_white]— Cass · Input —[/bright_white]",
             border_style="bright_white",
         )
@@ -163,7 +178,7 @@ def _print_cass_output(state: AgentState) -> None:
         )
 
 
-def run(profile: TasteProfile) -> None:
+def run(profile: TasteProfile, mastermix_mode: bool = False) -> None:
     """
     Execute a full recommendation session for the given TasteProfile.
 
@@ -177,7 +192,12 @@ def run(profile: TasteProfile) -> None:
       7. Log session end
     """
     session_start = datetime.now().isoformat()
-    logger.info("session start · profile: %s · time: %s", profile.name, session_start)
+    logger.info(
+        "session start · profile: %s · mastermix: %s · time: %s",
+        profile.name,
+        mastermix_mode,
+        session_start,
+    )
 
     # ── Gatekeeper pre-flight ──────────────────────────────────────────────────
     console.print(Rule("[dim]Gatekeeper Pre-Flight[/dim]"))
@@ -188,7 +208,7 @@ def run(profile: TasteProfile) -> None:
 
     # ── Session open ───────────────────────────────────────────────────────────
     render_narrator_intro(profile.name)
-    _print_cass_input(profile)
+    _print_cass_input(profile, mastermix_mode)
 
     # ── Graph execution ────────────────────────────────────────────────────────
     initial_state: AgentState = {
@@ -200,6 +220,7 @@ def run(profile: TasteProfile) -> None:
         "final_trajectory": [],
         "confidence": 0.0,
         "loop_count": 0,
+        "mastermix_mode": mastermix_mode,
         "agent_log": [f"[{session_start}] session start · profile: {profile.name}"],
     }
 
@@ -261,7 +282,20 @@ def main() -> None:
     """Parse arguments, select profile, and run the recommendation session."""
     args = _parse_args()
     profile = EXAMPLE_PROFILES[args.profile]
-    run(profile)
+
+    if args.mastermix and profile.target_bpm is None:
+        console.print(
+            Panel(
+                "[bold red]MasterMix mode requires a target BPM.[/bold red]\n\n"
+                f"The [cyan]{args.profile}[/cyan] profile does not declare a "
+                f"[cyan]target_bpm[/cyan]. Set one before using [cyan]--mastermix[/cyan].",
+                title="[red]MasterMix Error[/red]",
+                border_style="red",
+            )
+        )
+        sys.exit(1)
+
+    run(profile, mastermix_mode=args.mastermix)
 
 
 if __name__ == "__main__":

@@ -279,6 +279,7 @@ def _run_one(entry: dict) -> HarnessResult:
         "final_trajectory": [],
         "confidence": 0.0,
         "loop_count": 0,
+        "mastermix_mode": False,
         "agent_log": [
             f"[{datetime.now().isoformat()}] harness · profile {entry['id']} · start"
         ],
@@ -312,7 +313,9 @@ def _run_one(entry: dict) -> HarnessResult:
 
     source_mix_ok = result.lastfm_count >= 1 and result.radio_count >= 1
     songs_ok = result.songs_returned == 5
-    confidence_ok = result.confidence >= 0.7 or result.loops >= 3
+    # loop_count maxes at _MAX_LOOPS - 1 (= 2) because the ceiling fires at
+    # loop_count >= 2 and does not increment further. >= 3 is unreachable.
+    confidence_ok = result.confidence >= 0.7 or result.loops >= 2
 
     if empty_explanations:
         result.passed = False

@@ -24,6 +24,42 @@ logger = logging.getLogger(__name__)
 console = Console()
 
 _FINAL_COUNT = 5
+_BPM_WINDOW = 5.0
+
+def _mastermix_filter(songs: list[ExplainedSong], target_bpm: float) -> list[ExplainedSong]:
+    """
+    Filter candidates to those within ±_BPM_WINDOW of target_bpm.
+
+    Songs with bpm=None are treated as neutral and always included. If fewer
+    than 2 known-BPM candidates pass the window test, the filter is disabled
+    and the original pool is returned unchanged — this prevents a near-empty
+    candidate set when catalog BPM data is sparse.
+    """
+    bpm_known = [s for s in songs if s.scored_song.song.bpm is not None]
+    bpm_unknown = [s for s in songs if s.scored_song.song.bpm is None]
+
+    in_window = [
+        s for s in bpm_known
+        if abs(s.scored_song.song.bpm - target_bpm) <= _BPM_WINDOW
+    ]
+
+    if len(in_window) < 2:
+        logger.warning(
+            "mastermix · filter inactive — fewer than 2 candidates within ±%.0f BPM of %.0f",
+            _BPM_WINDOW,
+            target_bpm,
+        )
+        return songs
+
+    filtered = in_window + bpm_unknown
+    logger.info(
+        "mastermix · filtered to %d candidates (%d in window + %d neutral)",
+        len(filtered),
+        len(in_window),
+        len(bpm_unknown),
+    )
+    return filtered
+
 
 _RERANK_TOOL = {
     "name": "submit_final_trajectory",
@@ -89,6 +125,7 @@ def _build_rerank_message(explained_songs: list[ExplainedSong], profile_tags: li
     ]
     for i, es in enumerate(explained_songs):
         song = es.scored_song.song
+        bpm_str = f" · BPM: {song.bpm:.1f}" if song.bpm is not None else ""
         lines.append(
             f"[{i}] <user_input>{song.title}</user_input> "
             f"by <user_input>{song.artist}</user_input> "
@@ -97,7 +134,8 @@ def _build_rerank_message(explained_songs: list[ExplainedSong], profile_tags: li
             f"Confidence: {es.confidence:.2f} | "
             f"Tag overlap: {', '.join(es.tag_overlap) or 'none'}\n"
             f"    Energy: {song.energy:.2f} · Valence: {song.valence:.2f} · "
-            f"Dance: {song.danceability:.2f} · Acoustic: {song.acousticness:.2f}\n"
+            f"Dance: {song.danceability:.2f} · Acoustic: {song.acousticness:.2f}"
+            f"{bpm_str}\n"
         )
     lines.append(
         f"\nSelect exactly {_FINAL_COUNT} indices and arrange them as a trajectory."
@@ -109,6 +147,11 @@ def rerank(state: AgentState) -> AgentState:
     """
     Select and order the final five-song trajectory from the explained song pool.
 
+    When mastermix_mode is True and the profile declares a target_bpm, a
+    deterministic BPM filter runs before Maestro's LLM selection. Songs within
+    ±5 BPM of the target are preferred; songs with no BPM data are treated as
+    neutral and always included.
+
     If the API call fails, the top five explained songs by confidence are
     returned as a fallback — the trajectory note flags the fallback condition.
 
@@ -116,8 +159,17 @@ def rerank(state: AgentState) -> AgentState:
     """
     explained_songs = state["explained_songs"]
     profile = state["taste_profile"]
+    mastermix_mode = state.get("mastermix_mode", False)
 
-    _print_maestro_panel(len(explained_songs))
+    # Apply MasterMix BPM filter before handing the pool to Maestro.
+    if mastermix_mode and profile.target_bpm is not None:
+        bpm_candidates = [s for s in explained_songs if s.scored_song.song.bpm is not None]
+        if not bpm_candidates:
+            logger.warning("mastermix · filter inactive — no BPM metadata in catalog")
+        else:
+            explained_songs = _mastermix_filter(explained_songs, profile.target_bpm)
+
+    _print_maestro_panel(len(explained_songs), mastermix_mode)
     logger.info("maestro · node fired · %d candidates", len(explained_songs))
 
     # Ensure we have at least _FINAL_COUNT songs to select from.
@@ -192,14 +244,16 @@ def rerank(state: AgentState) -> AgentState:
     }
 
 
-def _print_maestro_panel(candidate_count: int) -> None:
+def _print_maestro_panel(candidate_count: int, mastermix_mode: bool = False) -> None:
     """Render Maestro's character panel showing his internal monologue."""
+    mastermix_line = "\n[yellow]MasterMix active — BPM filter applied.[/yellow]" if mastermix_mode else ""
     console.print(
         Panel(
             f"[bold blue]Maestro[/bold blue]\n\n"
             f"[italic]Arranging the set list. Five songs. One journey.[/italic]\n\n"
             f"Selecting from [green]{candidate_count}[/green] candidates.\n"
-            f"Criteria: source diversity · tag overlap · confidence · trajectory arc\n"
+            f"Criteria: source diversity · tag overlap · confidence · trajectory arc"
+            f"{mastermix_line}\n"
             f"Model: [dim]claude-haiku-4-5[/dim]",
             title="[blue]— Rerank —[/blue]",
             border_style="blue",

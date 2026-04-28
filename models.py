@@ -25,6 +25,7 @@ class SongFeature(BaseModel):
     acousticness: float = Field(ge=0.0, le=1.0)
     tags: list[str]
     url: Optional[str] = None
+    bpm: Optional[float] = None
 
 
 class TasteProfile(BaseModel):
@@ -43,6 +44,7 @@ class TasteProfile(BaseModel):
     acousticness: float = Field(ge=0.0, le=1.0)
     preferred_tags: list[str] = Field(max_length=10)
     context: Optional[str] = Field(default=None, max_length=200)
+    target_bpm: Optional[float] = Field(default=None, ge=0.0, le=300.0)
 
     @field_validator("preferred_tags", mode="before")
     @classmethod
@@ -98,9 +100,9 @@ class CritiqueResult(BaseModel):
     """
     Hertz's evaluation of the current ExplainedSong list.
 
-    loop_back is True when confidence < 0.7 AND loop_count < 3.
-    Once loop_count reaches 3, loop_back is forced False regardless
-    of confidence — the hard ceiling prevents infinite recursion.
+    loop_back is True when confidence < 0.7 AND loop_count < 2.
+    Once loop_count reaches 2 (_MAX_LOOPS - 1), loop_back is forced False
+    regardless of confidence — the hard ceiling prevents infinite recursion.
     """
 
     approved: bool
@@ -126,4 +128,5 @@ class AgentState(TypedDict):
     final_trajectory: list[ExplainedSong]
     confidence: float
     loop_count: int
+    mastermix_mode: bool
     agent_log: list[str]

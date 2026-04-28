@@ -22,6 +22,16 @@ The system retrieves songs from two live data sources simultaneously: Last.fm (t
 
 Every intermediate step is visible in the terminal. Every recommendation earns its place with evidence.
 
+### MasterMix — Precision Tempo Alignment
+
+MasterMix is an optional beat-matching mode that adds BPM awareness to the scoring and selection pipeline. It is activated by passing `--mastermix` at the command line together with a `target_bpm` value declared in the listener profile.
+
+When active, two things change. Tempo introduces BPM as a fifth cosine dimension alongside energy, valence, danceability, and acousticness — the listener's target tempo is scored against every candidate after Min-Max normalization across the catalog range. Maestro then applies a hard ±5 BPM proximity filter to the candidate pool before its final selection. Tracks within five beats per minute of the target pass; tracks outside are excluded. Tracks with no BPM data are treated as neutral and always remain eligible — the system does not penalize a candidate for missing metadata.
+
+MasterMix is designed for contexts where rhythmic consistency matters as much as genre: a workout session that must hold a training cadence, a DJ-style set where tracks need to transition without jarring tempo shifts, or any listening context where pace defines the experience as much as sound.
+
+BPM metadata is populated via the MeloData API enrichment step. Until that integration is in place, all retrieved tracks carry no BPM data and MasterMix degrades gracefully — the flag is accepted, Tempo scores on four dimensions as normal, and the candidate pool is unfiltered. When BPM data is present, the Glass Box explanation for each recommended track states the track's tempo and whether it falls within the requested window. The constraint is visible, not hidden.
+
 ---
 
 ## 3. System Architecture
@@ -98,14 +108,15 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Open `.env` and add your API keys. Two keys are required: an Anthropic key and a Last.fm key.
+Open `.env` and add your API keys. Two keys are required: `ANTHROPIC_API_KEY` and `LASTFM_API_KEY`. A third key, `MELODATA_API_KEY`, is optional — it enables MasterMix BPM enrichment when present. Without it, `--mastermix` activates but the BPM filter has no effect.
 
 ### Step 4: Run the recommender
 
 ```bash
-python main.py                    # default: afrobeats profile
-python main.py --profile ambient  # quiet, acoustic session
-python main.py --profile jazz     # Sunday morning profile
+python main.py                              # default: afrobeats profile
+python main.py --profile ambient            # quiet, acoustic session
+python main.py --profile jazz               # Sunday morning profile
+python main.py --profile afrobeats --mastermix  # BPM-matched trajectory (requires target_bpm in profile and MELODATA_API_KEY)
 ```
 
 ### Step 5: Run the eval harness
@@ -276,6 +287,14 @@ Last.fm and Radio Browser are called simultaneously rather than sequentially. Th
 
 Without a hard ceiling, a persistently low-quality catalog could cause the critique loop to run indefinitely. Three iterations give the system two additional chances to improve on the first pass while bounding the session time. On reaching the ceiling, the best available result is delivered and the ceiling is flagged in the terminal output and log.
 
+### MasterMix is opt-in, not always-on
+
+MasterMix adds BPM-based beat-matching to the recommendation pipeline, but it activates only when the listener explicitly requests it with `--mastermix`. An always-on filter would silently exclude high-similarity candidates that fall just outside the ±5 BPM window. Listeners who do not need rhythmic consistency should not have their results constrained by a rule they never set.
+
+When active, BPM enters the pipeline at two points. Tempo introduces it as a fifth cosine dimension — the listener's `target_bpm` is normalized against the catalog range and scored alongside energy, valence, danceability, and acousticness. Maestro then applies a hard ±5 BPM proximity filter to the explained candidate pool before its LLM selection step. That filter is deterministic, not a language model judgment. Tracks with no BPM metadata pass unconditionally. If fewer than two candidates carry BPM data, the filter disables itself rather than returning a near-empty pool.
+
+The flag requires `target_bpm` to be declared in the listener profile. Passing `--mastermix` without a declared tempo is rejected at the CLI with a plain-language error. The system does not substitute a default tempo and silently activate BPM scoring — the constraint is explicit or it is not active.
+
 ### Prestige uses Sonnet; other nodes use Haiku
 
 Glass Box explanation requires reasoning depth — the model must hold the scoring evidence, the tag overlap, and relevant cultural context simultaneously and integrate them into a coherent paragraph. Sonnet is the appropriate tool for this task. Misty, Hertz, and Maestro perform structured classification and extraction tasks where Haiku is sufficient and meaningfully faster.
@@ -298,6 +317,8 @@ The harness runs every profile through the full pipeline and prints a pass/fail 
 - Profile 6 (minimal valid): passes if optional fields default correctly
 - Profiles 7–10 (diverse normal): pass if 5 songs returned, confidence ≥ 0.7, source mix present
 
+A dedicated MasterMix unit test suite is in `tests/test_mastermix.py` (34 tests). It covers BPM range computation, Min-Max normalization boundary cases, 4D/5D vector dimension switching, per-dimension breakdown key correctness, filter window inclusion/exclusion, neutral-track passthrough, filter fallback when fewer than 2 candidates pass, and all new model field constraints. These tests run without API calls: `pytest tests/test_mastermix.py -v`.
+
 ---
 
 ## 11. Reflection
@@ -316,7 +337,7 @@ Building this system makes the limits of current recommendation architectures mo
 
 ## What This Project Says About Me as an AI Engineer
 
-This project shows that I build systems that are honest about what they do. The interesting decisions weren't about adding more AI — they were about knowing what each agent should and should not do. 
+This project shows that I build systems that are honest about what they do. The interesting decisions weren't about adding more AI — they were about knowing what each agent should and should not do.
 FYI, the app is not finished. As it stands, a user is placing their trust in a wall of text. That will not do. The app needs to implement one of the best sensors we humans are born with. To be continued...
 
 | Agent | Role | Design Decision |

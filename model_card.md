@@ -152,6 +152,20 @@ Biases present in Radio Browser data:
 - Station metadata quality is uneven — many stations have sparse or absent tag data
 - Vote counts do not reflect content quality, only popularity within the Radio Browser community
 
+### MasterMix BPM Reliability
+
+The MasterMix feature adds BPM-based filtering to the trajectory selection step. Its reliability is contingent on the presence of BPM metadata in the catalog.
+
+Neither Last.fm nor Radio Browser natively provides high-accuracy BPM. The `SongFeature.bpm` field is `None` for all tracks unless a metadata enrichment step populates it during retrieval.
+
+**Current behavior without enrichment:** When `bpm` is `None` on all catalog tracks, the BPM dimension is inactive. Cosine scoring remains four-dimensional (energy, valence, danceability, acousticness). The Maestro BPM filter treats all candidates as neutral and does not exclude any track. Activating `--mastermix` without BPM metadata provides no additional filtering effect; the system logs a warning and proceeds with the unfiltered pool.
+
+**Future enrichment requirement:** A metadata enrichment step using the [MeloData API](https://melodata.io) should be implemented in the retrieval phase to populate `SongFeature.bpm`. MeloData provides high-accuracy BPM via real audio analysis (Essentia engine), offers a free tier of 1,000 lookups per month, requires no account with a music platform, and caches results permanently. It is not subject to the restrictions that apply to Spotify's deprecated Audio Features endpoint.
+
+MeloData also provides energy, valence, and danceability from real audio analysis. A future enrichment step could optionally replace the current tag-based heuristic estimates for those dimensions, improving overall scoring accuracy. That change is out of scope for the MasterMix feature.
+
+**Consequence for users:** MasterMix mode produces meaningful BPM-matched trajectories only after the enrichment step is implemented. Without it, the feature flag is inert.
+
 ---
 
 ## 7. Guardrails Implementation
@@ -171,13 +185,17 @@ The following table maps current implementation components to their production-e
 
 ### Glass Box Specialization — Prestige Prompt Documentation
 
-Prestige uses a few-shot constrained system prompt. The prompt enforces five Glass Box rules:
+Prestige uses a checklist-structured system prompt. The prompt enforces five Glass Box rules, a sentence limit, and an anti-patterns list that targets the specific failure modes caught by the Hertz critique node:
 
-1. Name at least two vector dimensions by exact name (energy, valence, danceability, acousticness)
-2. State the numerical similarity score
-3. State tag overlap count and list the overlapping tags
-4. Include cultural context for the artist or genre where available
-5. Write in plain language — no jargon without definition
+1. **Score first:** The first sentence must state the similarity score as a decimal number.
+2. **Dimensions with threshold:** Name every dimension whose contribution exceeds 0.05 using its exact label (energy, valence, danceability, acousticness), with the contribution value in parentheses.
+3. **Tag overlap — exact count and full list:** State the precise tag overlap count and list every overlapping tag by name. If there is no overlap, state that explicitly.
+4. **Cultural context — dimension-linked:** Include one sentence naming a genre or artist tradition and connecting it to a specific dimension value from the scoring evidence.
+5. **BPM (when provided):** If BPM data appears in the scoring evidence, state the value and note whether the track falls within the MasterMix window.
+
+**Sentence limit:** 3 sentences. 4 maximum.
+
+The prompt includes an explicit anti-patterns section listing the failure modes that cause the Hertz critique to reject explanations (score omitted, contribution values missing, tag names not listed, cultural context not linked to a dimension value). This reduces first-pass rejection rates and limits critique loop-backs.
 
 The prompt includes an explicit baseline vs. Glass Box contrast to anchor the model's output away from generic recommendation language:
 
