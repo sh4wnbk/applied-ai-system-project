@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Music Theory</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&amp;family=Inter:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #131314; /* surface */
+            color: #e5e2e3; /* on-surface */
+            font-family: 'Inter', sans-serif;
+        }
+        .pixel-border {
+            box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+        }
+        .trace-line {
+            height: 2px;
+            background: #f6be3b; /* tertiary (copper-gold) */
+            position: absolute;
+        }
+        .circuit-bg {
+            background-image: radial-gradient(#1f1f20 1px, transparent 1px);
+            background-size: 16px 16px;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary": "#003737",
+                      "on-tertiary": "#402d00",
+                      "on-tertiary-fixed": "#261900",
+                      "primary-fixed": "#94f990",
+                      "surface": "#131314",
+                      "surface-container-low": "#1b1b1c",
+                      "on-secondary-fixed-variant": "#004f4f",
+                      "secondary-fixed-dim": "#00dddd",
+                      "inverse-on-surface": "#303031",
+                      "surface-container": "#1f1f20",
+                      "on-surface": "#e5e2e3",
+                      "on-tertiary-fixed-variant": "#5c4300",
+                      "surface-variant": "#353436",
+                      "error-container": "#93000a",
+                      "surface-container-highest": "#353436",
+                      "on-background": "#e5e2e3",
+                      "secondary-fixed": "#00fbfb",
+                      "on-primary-container": "#003c0b",
+                      "inverse-primary": "#006e1c",
+                      "on-primary-fixed-variant": "#005313",
+                      "secondary": "#ffffff",
+                      "tertiary": "#f6be3b",
+                      "on-primary-fixed": "#002204",
+                      "surface-dim": "#131314",
+                      "surface-container-lowest": "#0e0e0f",
+                      "tertiary-container": "#c59302",
+                      "inverse-surface": "#e5e2e3",
+                      "on-error": "#690005",
+                      "surface-tint": "#78dc77",
+                      "outline-variant": "#3f4a3c",
+                      "error": "#ffb4ab",
+                      "outline": "#899484",
+                      "background": "#131314",
+                      "surface-container-high": "#2a2a2b",
+                      "secondary-container": "#00fbfb",
+                      "on-surface-variant": "#becab9",
+                      "on-secondary-container": "#007070",
+                      "primary": "#78dc77",
+                      "on-error-container": "#ffdad6",
+                      "primary-container": "#4caf50",
+                      "on-primary": "#00390a",
+                      "surface-bright": "#39393a",
+                      "primary-fixed-dim": "#78dc77",
+                      "tertiary-fixed-dim": "#f6be3b",
+                      "on-secondary-fixed": "#002020",
+                      "on-tertiary-container": "#433000",
+                      "tertiary-fixed": "#ffdea0"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "16px",
+                      "base": "8px",
+                      "trace-width": "2px",
+                      "unit": "4px",
+                      "container-margin": "32px"
+              },
+              "fontFamily": {
+                      "label-mono": ["Space Grotesk"],
+                      "display-lg": ["Space Grotesk"],
+                      "headline-md": ["Space Grotesk"],
+                      "body-base": ["Inter"]
+              },
+              "fontSize": {
+                      "label-mono": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "500"}],
+                      "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "body-base": ["16px", {"lineHeight": "1.6", "letterSpacing": "0.01em", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary selection:text-on-primary">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full border-b-4 border-emerald-900/50 backdrop-blur-sm bg-gray-950/90 border-double border-emerald-800 shadow-[0_4px_0_0_rgba(0,0,0,1)] z-50">
+<div class="flex justify-between items-center h-20 px-8 max-w-[1440px] mx-auto">
+<div class="flex items-center gap-base">
+<span class="text-2xl font-black text-emerald-400 drop-shadow-[2px_2px_0px_rgba(34,197,94,0.5)] font-['Space_Grotesk'] tracking-tighter uppercase">Music Theory</span>
+</div>
+<div class="hidden md:flex gap-8 items-center font-['Space_Grotesk'] tracking-tighter uppercase font-bold">
+<a class="text-cyan-400 border-b-2 border-cyan-400 pb-1" href="#overview">Overview</a>
+<a class="text-emerald-700 hover:text-emerald-400 transition-colors" href="#agents">Agents</a>
+<a class="text-emerald-700 hover:text-emerald-400 transition-colors" href="#features">Features</a>
+<a class="text-emerald-700 hover:text-emerald-400 transition-colors" href="#docs">Docs</a>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden sm:flex items-center gap-4">
+<span class="material-symbols-outlined text-emerald-700 cursor-pointer hover:bg-emerald-950/50 hover:text-cyan-300 transition-all p-2 rounded" data-icon="settings">settings</span>
+<span class="material-symbols-outlined text-emerald-700 cursor-pointer hover:bg-emerald-950/50 hover:text-cyan-300 transition-all p-2 rounded" data-icon="account_circle">account_circle</span>
+</div>
+<button class="bg-primary-container text-on-primary-container font-label-mono text-label-mono px-6 py-3 border-2 border-emerald-900 pixel-border active:translate-y-0.5 active:translate-x-0.5 transition-transform" onclick="window.open('https://github.com', '_blank')">
+                    GitHub Repo
+                </button>
+</div>
+</div>
+</nav>
+<main class="pt-20 circuit-bg min-h-screen">
+<!-- Hero Section -->
+<section class="relative h-[819px] flex items-center justify-center overflow-hidden border-b-8 border-emerald-950" id="overview">
+<div class="absolute inset-0 z-0 bg-[radial-gradient(circle_at_top,rgba(120,220,119,0.10),transparent_35%),linear-gradient(180deg,rgba(19,19,20,0.58),rgba(19,19,20,0.98))]"></div>
+<div class="absolute inset-0 z-0 flex items-center justify-center opacity-24">
+<img alt="SP-1200 style speaker" class="w-[min(86vw,860px)] max-w-none object-cover object-center drop-shadow-[0_24px_48px_rgba(0,0,0,0.75)] scale-[1.04]" src="assets/speaker.png"/>
+</div>
+<div class="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-surface/15 to-surface/75"></div>
+<div class="relative z-10 text-center px-4 max-w-4xl">
+<div class="inline-block border-2 border-tertiary px-4 py-2 mb-8 bg-surface-container-low shadow-[4px_4px_0_0_#f6be3b]">
+<span class="font-label-mono text-label-mono text-tertiary">PIPELINE: ACTIVE | GRAPH NODES: 7 | SOURCES: 3</span>
+</div>
+<h1 class="font-display-lg text-display-lg md:text-8xl text-on-background mb-6 drop-shadow-[0_4px_0_#00390a]">
+                    Music Theory
+                </h1>
+<p class="font-body-base text-body-base text-on-surface-variant max-w-2xl mx-auto mb-10 text-lg leading-relaxed">
+                    Explained recommendations with live retrieval, cosine scoring, Glass Box reasoning, and critique loops. Evidence over intuition. Every recommendation earns its place.
+                </p>
+<div class="flex flex-wrap justify-center gap-6">
+<button class="bg-secondary-container text-on-secondary-container font-headline-md text-headline-md px-10 py-5 border-2 border-on-secondary pixel-border active:translate-y-1 transition-all" onclick="document.getElementById('agents').scrollIntoView({behavior: 'smooth'})">
+                        VIEW AGENTS
+                    </button>
+<button class="bg-surface-container-high text-primary font-headline-md text-headline-md px-10 py-5 border-2 border-primary pixel-border active:translate-y-1 transition-all" onclick="window.open('https://github.com', '_blank')">
+                        READ SOURCE
+                    </button>
+</div>
+</div>
+<!-- Isometric Decoration Pins -->
+<div class="absolute left-8 bottom-8 hidden lg:block">
+<div class="flex flex-col gap-2">
+<div class="w-12 h-4 bg-tertiary border-2 border-on-tertiary"></div>
+<div class="w-12 h-4 bg-tertiary border-2 border-on-tertiary"></div>
+<div class="w-12 h-4 bg-tertiary border-2 border-on-tertiary"></div>
+</div>
+</div>
+</section>
+<!-- The Pipeline Grid Section -->
+<section class="max-w-[1440px] mx-auto px-container-margin py-24" id="agents">
+<div class="flex items-end gap-4 mb-16">
+<div class="w-2 h-16 bg-primary"></div>
+<div>
+<h2 class="font-display-lg text-display-lg text-primary mb-2">The Seven Agents</h2>
+<p class="font-label-mono text-label-mono text-on-surface-variant uppercase">Output: 5-SONG TRAJECTORY | SCORING: 4-DIMENSIONAL VECTOR SPACE</p>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter auto-rows-auto items-start">
+<!-- Cass — featured top card -->
+<div class="md:col-span-2 group bg-surface-container border-2 border-outline-variant p-gutter relative overflow-hidden pixel-border hover:border-secondary-fixed transition-colors">
+<div class="flex flex-col gap-5">
+<div class="w-full h-56 border-2 border-on-primary bg-surface-container-low p-4 flex items-center justify-center">
+<img alt="Cass" class="w-full h-full object-contain" src="assets/cass.png"/>
+</div>
+<div class="flex flex-col gap-2">
+<h3 class="font-headline-md text-headline-md text-primary">Cass</h3>
+<p class="font-label-mono text-label-mono text-secondary-fixed-dim">INPUT + OUTPUT HANDLER</p>
+<p class="font-body-base text-body-base text-on-surface-variant">CLI orchestrator. Accepts TasteProfile vectors (energy, valence, danceability, acousticness) and preference tags. Passes through Gatekeeper safety checks. Renders final trajectory with rich terminal UI including character panels, scoring tables, and Glass Box explanations.</p>
+</div>
+<div class="bg-surface-container-low p-4 border-l-4 border-tertiary">
+<div class="flex justify-between items-center text-xs font-label-mono mb-2">
+<span>CONFIDENCE SCORE</span>
+<span>0.92</span>
+</div>
+<div class="w-full h-2 bg-surface-variant">
+<div class="w-11/12 h-full bg-gradient-to-r from-primary via-secondary-fixed to-tertiary"></div>
+</div>
+</div>
+</div>
+<div class="absolute bottom-4 right-4 flex gap-1">
+<div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+<div class="w-2 h-2 rounded-full bg-primary opacity-50"></div>
+<div class="w-2 h-2 rounded-full bg-primary opacity-25"></div>
+</div>
+</div>
+
+<!-- 2. Misty — Retrieve -->
+<div class="bg-surface-container-high border-2 border-outline-variant p-gutter pixel-border group hover:border-secondary-fixed transition-all">
+<div class="flex flex-col gap-4">
+<div class="w-full h-44 border-2 border-outline-variant bg-surface-container-low p-4 flex items-center justify-center">
+<img alt="Misty" class="w-full h-full object-contain" src="assets/misty.png"/>
+</div>
+<div class="flex flex-col gap-2">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-0">Misty</h3>
+<p class="font-label-mono text-label-mono text-tertiary">DUAL-SOURCE RETRIEVAL</p>
+</div>
+<p class="font-body-base text-body-base text-on-surface-variant text-sm">Parallel ThreadPoolExecutor threads Last.fm + Radio Browser API calls. Merges both catalogs into SongFeature list. Optional MeloData 3-phase BPM enrichment (ISRC search → batch features → catalog discovery). Graceful fallback if one source fails.</p>
+</div>
+</div>
+
+<!-- 3. Tempo — Score -->
+<div class="bg-surface-container-high border-2 border-outline-variant p-gutter pixel-border group hover:border-secondary-fixed transition-all">
+<div class="flex flex-col gap-4">
+<div class="w-full h-44 border-2 border-outline-variant bg-surface-container-low p-4 flex items-center justify-center">
+<img alt="Tempo" class="w-full h-full object-contain" src="assets/tempo.png"/>
+</div>
+<div class="flex flex-col gap-2">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-0">Tempo</h3>
+<p class="font-label-mono text-label-mono text-tertiary">COSINE SIMILARITY SCORING</p>
+</div>
+<p class="font-body-base text-body-base text-on-surface-variant text-sm">Pure NumPy 4D base (energy, valence, danceability, acousticness). Extended to 5D with BPM when MasterMix active. Min-Max normalized. No LLM—deterministic math. Per-dimension breakdown shows contribution of each feature to total score.</p>
+</div>
+</div>
+
+<!-- 4. Prestige — Explain -->
+<div class="bg-surface-container border-2 border-outline-variant p-gutter pixel-border hover:border-secondary-fixed transition-all">
+<div class="flex flex-col gap-4">
+<div class="w-full h-44 border-2 border-outline-variant bg-surface-container-low p-4 flex items-center justify-center">
+<img alt="Prestige" class="w-full h-full object-contain" src="assets/prestige.png"/>
+</div>
+<div class="flex flex-col gap-2">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-0">Prestige</h3>
+<p class="font-label-mono text-label-mono text-tertiary">GLASS BOX EXPLANATION</p>
+</div>
+<p class="font-body-base text-body-base text-on-surface-variant text-sm">Claude Sonnet generates 3–4 sentence explanations for top candidates. Names dimensions with values. Cites similarity scores. Lists overlapping tags. Explains cultural context (genre/tradition → dimensional alignment). Enforces checklist compliance.</p>
+</div>
+</div>
+
+<!-- 5. Hertz — Critique -->
+<div class="bg-surface-container border-2 border-outline-variant p-gutter pixel-border hover:border-secondary-fixed transition-all">
+<div class="flex flex-col gap-4">
+<div class="w-full h-44 border-2 border-outline-variant bg-surface-container-low p-4 flex items-center justify-center">
+<img alt="Hertz" class="w-full h-full object-contain" src="assets/hertz.png"/>
+</div>
+<div class="flex flex-col gap-2">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-0">Hertz</h3>
+<p class="font-label-mono text-label-mono text-tertiary">QUALITY CRITIQUE + LOOP CONTROL</p>
+</div>
+<p class="font-body-base text-body-base text-on-surface-variant text-sm">Claude Haiku evaluates explanation set quality. Confidence threshold 0.7. Requests re-retrieval if below threshold and loop_count &lt; 3. Max 3 iterations ceiling. Approves and advances to Maestro on pass or ceiling.</p>
+</div>
+</div>
+
+<!-- 6. Maestro — Rerank -->
+<div class="bg-surface-container-high border-2 border-outline-variant p-gutter pixel-border hover:border-secondary-fixed transition-all">
+<div class="flex flex-col gap-4">
+<div class="w-full h-44 border-2 border-outline-variant bg-surface-container-low p-4 flex items-center justify-center">
+<img alt="Maestro" class="w-full h-full object-contain" src="assets/maestro.png"/>
+</div>
+<div class="flex flex-col gap-2">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-0">Maestro</h3>
+<p class="font-label-mono text-label-mono text-tertiary">TRAJECTORY SELECTION + RANKING</p>
+</div>
+<p class="font-body-base text-body-base text-on-surface-variant text-sm">Selects exactly 5 songs from scored candidates. Orders as listening arc. Weighs source diversity, tag overlap, confidence scores. Generates single-sentence trajectory_note describing the narrative flow through the sequence.</p>
+</div>
+</div>
+
+<!-- 7. Base — Narrator -->
+<div class="bg-surface-container-high border-2 border-outline-variant p-gutter pixel-border hover:border-secondary-fixed transition-all h-full flex flex-col">
+<div class="flex flex-col gap-4 flex-1">
+<div class="w-full h-44 border-2 border-outline-variant bg-surface-container-low p-4 flex items-center justify-center">
+<img alt="Base" class="w-full h-full object-contain" src="assets/base.png"/>
+</div>
+<div class="flex flex-col gap-2">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-0">Base</h3>
+<p class="font-label-mono text-label-mono text-tertiary">SESSION NARRATOR (UI)</p>
+</div>
+<p class="font-body-base text-body-base text-on-surface-variant text-sm">Rich terminal rendering via Rich library. Character intro panels. Scored songs table. Per-track Glass Box card. Trajectory arc description. Agent log with timestamps and status at each step.</p>
+</div>
+</div>
+</section>
+<!-- Features Section -->
+<section class="max-w-[1440px] mx-auto px-container-margin py-24" id="features">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-24">
+<div class="border-l-4 border-primary pl-6">
+<h3 class="font-headline-md text-headline-md text-primary mb-4">Live Data Sources</h3>
+<p class="font-body-base text-body-base text-on-surface-variant">Last.fm + Radio Browser parallel retrieval. Optional MeloData for BPM-aware catalog discovery. Graceful degradation if one source fails.</p>
+</div>
+<div class="border-l-4 border-tertiary pl-6">
+<h3 class="font-headline-md text-headline-md text-tertiary mb-4">Evidence-Based Ranking</h3>
+<p class="font-body-base text-body-base text-on-surface-variant">Deterministic cosine similarity math. No hidden LLM scoring. Per-dimension breakdowns show exactly why each song ranked where it did.</p>
+</div>
+<div class="border-l-4 border-secondary-fixed pl-6">
+<h3 class="font-headline-md text-headline-md text-secondary-fixed mb-4">Multi-Agent Critique</h3>
+<p class="font-body-base text-body-base text-on-surface-variant">Hertz evaluates explanation quality with confidence thresholds. Up to 3 re-retrieval loops. Fail-closed gatekeeper blocks harmful input before graph starts.</p>
+</div>
+</div>
+</section>
+<!-- Final CTA / Board Detail -->
+<section class="max-w-[1440px] mx-auto px-container-margin pb-32">
+<div class="relative bg-gray-950 border-4 border-emerald-900 p-12 overflow-hidden pixel-border">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent"></div>
+<div class="flex flex-col md:flex-row justify-between items-center gap-12 relative z-10">
+<div class="max-w-xl">
+<h2 class="font-display-lg text-display-lg text-on-surface mb-6">Ready to generate recommendations?</h2>
+<p class="font-body-base text-body-base text-on-surface-variant text-lg">Clone the repo. Install dependencies. Define a TasteProfile with audio dimensions and mood tags. Run the pipeline. Get back five explained songs with evidence, confidence scores, and trajectory narrative.</p>
+</div>
+<div class="flex flex-col gap-4 w-full md:w-auto">
+<button class="bg-primary text-on-primary font-headline-md text-headline-md px-12 py-6 border-4 border-emerald-950 pixel-border hover:bg-primary-fixed transition-all" onclick="window.open('https://github.com', '_blank')">
+                            VIEW ON GITHUB
+                        </button>
+<div class="flex justify-center gap-base">
+<span class="w-3 h-3 bg-tertiary"></span>
+<span class="w-3 h-3 bg-tertiary"></span>
+<span class="w-3 h-3 bg-tertiary"></span>
+</div>
+</button>
+</div>
+</div>
+<!-- Circuit Trace Decoration -->
+<div class="absolute -bottom-10 -right-10 opacity-20 rotate-45">
+<span class="material-symbols-outlined text-[300px] text-primary" data-icon="memory">memory</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full border-t-8 border-emerald-950 bg-gray-900 border-orange-400/20">
+<div class="flex flex-col md:flex-row justify-between items-center py-12 px-8 gap-6 max-w-[1440px] mx-auto font-['Space_Grotesk'] text-xs tracking-widest uppercase">
+<div class="text-lg font-bold text-emerald-500">
+                Music Theory Recommender
+            </div>
+<div class="flex flex-wrap justify-center gap-8 text-emerald-800">
+<a class="hover:text-emerald-400 transition-colors duration-150" href="https://github.com" target="_blank">GitHub</a>
+<a class="hover:text-emerald-400 transition-colors duration-150" href="#features">Features</a>
+<a class="hover:text-emerald-400 transition-colors duration-150" href="#agents">Agents</a>
+</div>
+<div class="text-emerald-600">
+                © 2026 Music Theory - Built with LangGraph · Powered by Anthropic Claude
+            </div>
+</div>
+</footer>
+</body></html>
