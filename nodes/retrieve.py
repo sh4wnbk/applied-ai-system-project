@@ -22,6 +22,7 @@ from rich.table import Table
 
 from models import AgentState, SongFeature
 from sources.lastfm import fetch_songs
+from sources.melodata import enrich_catalog_bpm
 from sources.radiobrowser import fetch_stations
 
 logger = logging.getLogger(__name__)
@@ -125,9 +126,23 @@ def retrieve(state: AgentState) -> AgentState:
     _print_catalog_summary(lastfm_songs, radio_songs)
     logger.info("misty · merged catalog · %d total songs", len(catalog))
 
+    bpm_hits = 0
+    if state.get("mastermix_mode"):
+        console.print(
+            Panel(
+                "[bold magenta]MasterMix active.[/bold magenta] "
+                "Enriching Last.fm tracks with BPM via MeloData...",
+                title="[magenta]— BPM Enrichment —[/magenta]",
+                border_style="magenta",
+            )
+        )
+        catalog, bpm_hits = enrich_catalog_bpm(catalog)
+        _print_bpm_summary(catalog, bpm_hits)
+
     log_entry = (
         f"[{datetime.now().isoformat()}] misty · retrieved {len(lastfm_songs)} from last.fm, "
         f"{len(radio_songs)} from radio browser · total: {len(catalog)}"
+        + (f" · bpm enriched: {bpm_hits}" if state.get("mastermix_mode") else "")
     )
 
     return {
@@ -160,4 +175,19 @@ def _print_catalog_summary(lastfm: list[SongFeature], radio: list[SongFeature]) 
     table.add_row("Last.fm", str(len(lastfm)))
     table.add_row("Radio Browser", str(len(radio)))
     table.add_row("[bold]Total[/bold]", f"[bold]{len(lastfm) + len(radio)}[/bold]")
+    console.print(table)
+
+
+def _print_bpm_summary(catalog: list[SongFeature], hits: int) -> None:
+    """Print a Rich table showing BPM enrichment results after MeloData call."""
+    lastfm_count = sum(1 for s in catalog if s.source == "lastfm")
+    table = Table(title="MasterMix — BPM Enrichment", show_header=True, header_style="bold magenta")
+    table.add_column("", style="magenta")
+    table.add_column("", justify="right")
+    table.add_row("Last.fm tracks searched", str(lastfm_count))
+    table.add_row("BPM values resolved", f"[green]{hits}[/green]" if hits else "[yellow]0[/yellow]")
+    table.add_row(
+        "Radio Browser stations",
+        f"[dim]{sum(1 for s in catalog if s.source == 'radio')} (neutral — no ISRC)[/dim]",
+    )
     console.print(table)

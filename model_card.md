@@ -158,13 +158,13 @@ The MasterMix feature adds BPM-based filtering to the trajectory selection step.
 
 Neither Last.fm nor Radio Browser natively provides high-accuracy BPM. The `SongFeature.bpm` field is `None` for all tracks unless a metadata enrichment step populates it during retrieval.
 
-**Current behavior without enrichment:** When `bpm` is `None` on all catalog tracks, the BPM dimension is inactive. Cosine scoring remains four-dimensional (energy, valence, danceability, acousticness). The Maestro BPM filter treats all candidates as neutral and does not exclude any track. Activating `--mastermix` without BPM metadata provides no additional filtering effect; the system logs a warning and proceeds with the unfiltered pool.
+**BPM enrichment implementation:** When `--mastermix` is active, the retrieve node calls the [MeloData API](https://melodata.voltenworks.com) after Misty's dual-source retrieval. Each Last.fm track is searched by title and artist to resolve its ISRC. Resolved ISRCs are submitted in a single batch features call (up to 50 per batch) to retrieve high-accuracy BPM values from real audio analysis via the Essentia engine. `SongFeature.bpm` is populated from the response. The enrichment step is skipped for Radio Browser stations, which have no ISRC and are always treated as neutral by the Maestro filter.
 
-**Future enrichment requirement:** A metadata enrichment step using the [MeloData API](https://melodata.io) should be implemented in the retrieval phase to populate `SongFeature.bpm`. MeloData provides high-accuracy BPM via real audio analysis (Essentia engine), offers a free tier of 1,000 lookups per month, requires no account with a music platform, and caches results permanently. It is not subject to the restrictions that apply to Spotify's deprecated Audio Features endpoint.
+**Behavior when `MELODATA_API_KEY` is absent:** BPM enrichment is silently skipped. Cosine scoring remains four-dimensional. The Maestro BPM filter treats all candidates as neutral. The `--mastermix` flag is accepted and the session proceeds without BPM matching — no error is raised.
 
-MeloData also provides energy, valence, and danceability from real audio analysis. A future enrichment step could optionally replace the current tag-based heuristic estimates for those dimensions, improving overall scoring accuracy. That change is out of scope for the MasterMix feature.
+**Quota management:** The MeloData free tier provides 1,000 lookups per month. Each search call and each feature lookup counts as one lookup. Enrichment is gated behind the `--mastermix` flag so quota is not spent on sessions that do not use BPM matching. A catalog of 50 Last.fm tracks costs approximately 100 lookups per session (50 search + 50 feature).
 
-**Consequence for users:** MasterMix mode produces meaningful BPM-matched trajectories only after the enrichment step is implemented. Without it, the feature flag is inert.
+MeloData also provides energy, valence, and danceability from real audio analysis. A future enrichment step could optionally replace the current tag-based heuristic estimates for those dimensions, improving overall scoring accuracy. That change is out of scope for the current MasterMix implementation.
 
 ---
 

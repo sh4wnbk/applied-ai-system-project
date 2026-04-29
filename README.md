@@ -32,7 +32,9 @@ When active, two things change. Tempo introduces BPM as a fifth cosine dimension
 
 MasterMix is designed for contexts where rhythmic consistency matters as much as genre: a workout session that must hold a training cadence, a DJ-style set where tracks need to transition without jarring tempo shifts, or any listening context where pace defines the experience as much as sound.
 
-BPM metadata is populated via the MeloData API enrichment step. Until that integration is in place, all retrieved tracks carry no BPM data and MasterMix degrades gracefully — the flag is accepted, Tempo scores on four dimensions as normal, and the candidate pool is unfiltered. When BPM data is present, the Glass Box explanation for each recommended track states the track's tempo and whether it falls within the requested window. The constraint is visible, not hidden.
+BPM metadata is populated via the MeloData API enrichment step. After Misty retrieves the catalog, the system searches each Last.fm track against the MeloData database to resolve its ISRC, then batch-fetches audio features to populate `SongFeature.bpm` with high-accuracy values from real audio analysis (Essentia engine). Radio Browser stations carry no ISRC and are treated as neutral candidates — they are never excluded by the BPM filter. The Glass Box explanation for each recommended track states the track's tempo and whether it falls within the requested window. The constraint is visible, not hidden.
+
+If `MELODATA_API_KEY` is absent, BPM enrichment is silently skipped and MasterMix degrades gracefully to four-dimensional cosine scoring with no filter applied.
 
 ---
 
