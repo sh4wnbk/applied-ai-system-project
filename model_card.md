@@ -10,7 +10,7 @@ This document describes not only what the system does, but what it cannot do, wh
 
 **Type:** LangGraph-powered agentic recommendation system
 
-**Purpose:** Accept a listener's four-dimensional audio preference vector and a set of genre or mood tags, retrieve live song data from two external sources, and return a prioritized, explained five-song trajectory where every recommendation cites its own reasoning evidence.
+**Purpose:** Accept a listener's four-dimensional audio preference vector and a set of genre or mood tags, retrieve live song data from three external sources, and return a prioritized, explained five-song trajectory where every recommendation cites its own reasoning evidence. When MasterMix mode is active, a fifth BPM dimension is added via the MeloData audio analysis API, and candidates are filtered to within ±5 BPM of the listener's target tempo.
 
 **Primary interface:** Python CLI
 
@@ -18,7 +18,7 @@ This document describes not only what the system does, but what it cannot do, wh
 
 | Node | Character | Model |
 | --- | --- | --- |
-| Retrieve | Misty | No LLM — HTTP retrieval only |
+| Retrieve | Misty | No LLM — HTTP retrieval only (Last.fm, Radio Browser, MeloData) |
 | Score | Tempo | No LLM — cosine similarity (numpy) |
 | Explain | Prestige | claude-sonnet-4-6 |
 | Critique | Hertz | claude-haiku-4-5 |
@@ -34,8 +34,8 @@ The original system operated on a static, hand-coded 20-song catalog. It matched
 
 **Extensions introduced in Music Theory:**
 
-- Static catalog replaced with live retrieval from Last.fm and Radio Browser
-- Weighted point scoring replaced with cosine similarity over a four-dimensional audio feature vector
+- Static catalog replaced with live retrieval from Last.fm and Radio Browser; MeloData added as a third source for BPM enrichment and catalog discovery in MasterMix mode
+- Weighted point scoring replaced with cosine similarity over a four-dimensional audio feature vector (energy, valence, danceability, acousticness); a fifth BPM dimension is added in MasterMix mode
 - Natural language explanations generated via a constrained few-shot Glass Box prompt
 - Self-evaluation loop added via the Hertz critique node with a bounded retry mechanism
 - Input moderation added via Claude Haiku pre-flight (Gatekeeper node)
@@ -152,17 +152,42 @@ Biases present in Radio Browser data:
 - Station metadata quality is uneven — many stations have sparse or absent tag data
 - Vote counts do not reflect content quality, only popularity within the Radio Browser community
 
+### MeloData
+
+MeloData is an audio intelligence API that provides high-accuracy BPM and audio feature data derived from real acoustic analysis (Essentia engine). It is the third catalog source, activated exclusively when the `--mastermix` flag is passed.
+
+Unlike Last.fm and Radio Browser, MeloData does not supply a browsable music catalog that can be queried by genre tag. Instead, the system uses it in two complementary ways:
+
+1. **BPM enrichment** — Last.fm tracks already in the catalog are cross-referenced by ISRC to resolve accurate BPM values, replacing the `None` default.
+2. **Catalog discovery** — MeloData's `/v1/recommendations` endpoint is seeded with resolved ISRCs and the listener's target audio features to pull up to 20 additional tracks from MeloData's indexed catalog. These tracks arrive with BPM and full audio features already attached and are added to the catalog as `source="melodata"` entries alongside the Last.fm and Radio Browser candidates.
+
+Biases present in MeloData data:
+
+- Coverage skews toward commercially released and digitally distributed tracks that carry an ISRC. Underground, self-released, or regional recordings may not be indexed.
+- Recommendation outputs reflect MeloData's internal similarity model, not the system's own cosine scoring. They enter the system as unranked candidates and are scored by Tempo on the same basis as all other tracks.
+- Tracks returned from the recommendations endpoint may not match the listener's genre tags — BPM and energy proximity drive selection, not tag alignment.
+
 ### MasterMix BPM Reliability
 
-The MasterMix feature adds BPM-based filtering to the trajectory selection step. Its reliability is contingent on the presence of BPM metadata in the catalog.
+The MasterMix feature adds a fifth BPM dimension to cosine scoring and a ±5 BPM proximity filter in Maestro's trajectory selection. Its reliability is contingent on the presence of BPM metadata in the catalog.
 
-Neither Last.fm nor Radio Browser natively provides high-accuracy BPM. The `SongFeature.bpm` field is `None` for all tracks unless a metadata enrichment step populates it during retrieval.
+Neither Last.fm nor Radio Browser natively provides high-accuracy BPM. The `SongFeature.bpm` field is `None` for all tracks unless the MeloData enrichment step populates it.
 
-**BPM enrichment implementation:** When `--mastermix` is active, the retrieve node calls the [MeloData API](https://melodata.voltenworks.com) after Misty's dual-source retrieval. Each Last.fm track is searched by title and artist to resolve its ISRC. Resolved ISRCs are submitted in a single batch features call (up to 50 per batch) to retrieve high-accuracy BPM values from real audio analysis via the Essentia engine. `SongFeature.bpm` is populated from the response. The enrichment step is skipped for Radio Browser stations, which have no ISRC and are always treated as neutral by the Maestro filter.
+**Three-phase BPM pipeline** (runs only when `--mastermix` is active):
 
-**Behavior when `MELODATA_API_KEY` is absent:** BPM enrichment is silently skipped. Cosine scoring remains four-dimensional. The Maestro BPM filter treats all candidates as neutral. The `--mastermix` flag is accepted and the session proceeds without BPM matching — no error is raised.
+**Phase 1 — ISRC enrichment:** Each Last.fm track's title and artist are searched against MeloData's index in parallel (up to 5 concurrent requests, respecting the free-tier rate limit). Featured-artist credits are stripped from titles before search to improve match rates. Resolved ISRCs are submitted in a single batch features call (up to 50 per batch) to retrieve BPM values. `SongFeature.bpm` is populated for any track with a match.
 
-**Quota management:** The MeloData free tier provides 1,000 lookups per month. Each search call and each feature lookup counts as one lookup. Enrichment is gated behind the `--mastermix` flag so quota is not spent on sessions that do not use BPM matching. A catalog of 50 Last.fm tracks costs approximately 100 lookups per session (50 search + 50 feature).
+**Phase 2 — Artist seed fallback:** If Phase 1 resolves zero ISRCs — common when the catalog is dominated by tracks that are not in MeloData's index (e.g., regional artists, niche genres) — the system falls back to artist-name-only searches across all distinct Last.fm artists, stopping at the first successful ISRC resolution. This seed ISRC is used exclusively to unlock Phase 3; it does not enrich the originating track's BPM.
+
+**Phase 3 — Catalog discovery:** If at least one seed ISRC was resolved in Phase 1 or 2, up to 20 MeloData recommendation tracks are fetched using those ISRCs as seeds, with the listener's `target_bpm`, `energy`, `danceability`, and `valence` as target features. Returned tracks are batch-fetched for full audio features (including `acousticness`, which the recommendations endpoint does not return inline) and added to the catalog as `source="melodata"` entries with `bpm` populated.
+
+Radio Browser stations are always excluded from all three phases — they have no ISRC and are treated as BPM-neutral by the Maestro filter regardless of MasterMix mode.
+
+**Behavior when `MELODATA_API_KEY` is absent:** BPM enrichment is silently skipped. Cosine scoring remains four-dimensional. The Maestro filter treats all candidates as neutral. The `--mastermix` flag is accepted and the session proceeds without BPM matching — no error is raised.
+
+**Behavior when no seed ISRC can be resolved:** Phase 3 is skipped. The existing catalog is scored without BPM. A log message records the skip. The session continues normally.
+
+**Quota management:** The MeloData free tier provides 1,000 lookups per month. Each search call and each batch features call counts against quota. Enrichment is gated behind `--mastermix` so quota is not spent on standard sessions. A catalog of 50 Last.fm tracks costs approximately 100–120 lookups per MasterMix session (50 search + 50 batch enrich + up to 20 recommendation feature lookups).
 
 MeloData also provides energy, valence, and danceability from real audio analysis. A future enrichment step could optionally replace the current tag-based heuristic estimates for those dimensions, improving overall scoring accuracy. That change is out of scope for the current MasterMix implementation.
 
@@ -249,6 +274,18 @@ User-facing message: "The reasoning engine is temporarily rate-limited. Retry in
 
 System behavior: logs to `logs/session.log`, exits cleanly.
 
+### MeloData API unavailable or key absent (MasterMix mode)
+
+User-facing message: None — the MeloData enrichment step fails silently and logs a warning.
+
+System behavior: BPM fields remain `None` for all tracks. Cosine scoring runs in four dimensions. The Maestro BPM filter treats all candidates as neutral. The session produces a trajectory without BPM matching. A log entry notes the skip.
+
+### MeloData returns no seed ISRC (Phase 2 exhausted)
+
+User-facing message: None — logged at INFO level.
+
+System behavior: Phase 3 (catalog discovery) is skipped. The catalog contains only Last.fm and Radio Browser tracks. BPM values for any tracks successfully enriched in Phase 1 remain populated. The session continues normally. This occurs most frequently when the genre tags yield tracks not indexed in MeloData (e.g., regional or niche artists).
+
 ### Anthropic API unavailable (Gatekeeper moderation call)
 
 User-facing message: "Input safety verification is currently unavailable. The system cannot process this request. Please try again."
@@ -258,6 +295,10 @@ System behavior: fails closed. Input never reaches the graph. Logs the failure.
 ---
 
 ## 9. Known Limitations
+
+### MeloData catalog coverage gap
+
+MeloData's index skews toward commercially released tracks with ISRCs. Genre profiles built around regional, underground, or niche music (e.g., Afrobeats artists not distributed through major international channels) may yield zero ISRC matches in Phase 1, triggering the artist-seed fallback. If the fallback also fails, Phase 3 catalog discovery is skipped entirely. In these cases, MasterMix mode still applies the ±5 BPM filter in Maestro but has no BPM-tagged candidates to filter — the filter becomes a no-op. The trajectory is produced from Last.fm and Radio Browser tracks only, with `bpm=None` for all entries.
 
 ### Filter bubble risk
 

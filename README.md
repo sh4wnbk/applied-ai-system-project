@@ -26,15 +26,35 @@ Every intermediate step is visible in the terminal. Every recommendation earns i
 
 ### MasterMix — Precision Tempo Alignment
 
-MasterMix is an optional beat-matching mode that adds BPM awareness to the scoring and selection pipeline. It is activated by passing `--mastermix` at the command line together with a `target_bpm` value declared in the listener profile.
+MasterMix is an optional beat-matching mode that adds a third live data source and full BPM awareness to the scoring and selection pipeline.
 
-When active, two things change. Tempo introduces BPM as a fifth cosine dimension alongside energy, valence, danceability, and acousticness — the listener's target tempo is scored against every candidate after Min-Max normalization across the catalog range. Maestro then applies a hard ±5 BPM proximity filter to the candidate pool before its final selection. Tracks within five beats per minute of the target pass; tracks outside are excluded. Tracks with no BPM data are treated as neutral and always remain eligible — the system does not penalize a candidate for missing metadata.
+```bash
+python main.py --profile afrobeats --mastermix            # uses profile's target_bpm
+python main.py --profile afrobeats --mastermix --bpm 105  # override to any tempo (0–300)
+python main.py --profile jazz --mastermix --bpm 80        # activate on any profile
+```
 
-MasterMix is designed for contexts where rhythmic consistency matters as much as genre: a workout session that must hold a training cadence, a DJ-style set where tracks need to transition without jarring tempo shifts, or any listening context where pace defines the experience as much as sound.
+The `--bpm` flag sets or overrides the profile's `target_bpm` at runtime — no file editing required. `--mastermix` without a declared BPM (in the profile or via `--bpm`) is rejected at the CLI with a plain-language error.
 
-BPM metadata is populated via the MeloData API enrichment step. After Misty retrieves the catalog, the system searches each Last.fm track against the MeloData database to resolve its ISRC, then batch-fetches audio features to populate `SongFeature.bpm` with high-accuracy values from real audio analysis (Essentia engine). Radio Browser stations carry no ISRC and are treated as neutral candidates — they are never excluded by the BPM filter. The Glass Box explanation for each recommended track states the track's tempo and whether it falls within the requested window. The constraint is visible, not hidden.
+**What changes when MasterMix is active:**
 
-If `MELODATA_API_KEY` is absent, BPM enrichment is silently skipped and MasterMix degrades gracefully to four-dimensional cosine scoring with no filter applied.
+Tempo introduces BPM as a fifth cosine dimension. The listener's target tempo is Min-Max normalized against the catalog range and scored alongside energy, valence, danceability, and acousticness. Maestro applies a hard ±5 BPM proximity filter to the explained candidate pool before its selection step — tracks inside the window are preferred, tracks with no BPM data are always included as neutral. The BPM column appears in the Top Scored Songs table, the Final Trajectory table, and each track card in the output — the filter is visible, not hidden.
+
+**The BPM pipeline — three phases:**
+
+After Misty completes dual-source retrieval, MasterMix triggers a three-phase BPM enrichment via the <img src="assets/melodata.png" alt="MeloData" height="18" style="vertical-align:middle"/> MeloData API:
+
+1. **Track enrichment** — each Last.fm track is searched by title and artist to resolve its ISRC. Resolved ISRCs are submitted in a batch features call to populate `SongFeature.bpm` with high-accuracy values from real audio analysis (Essentia engine). Featured-artist credits are stripped from titles before search to improve match rates.
+
+2. **Artist seed fallback** — if direct track lookup yields no ISRCs (common when Last.fm returns mainstream pop tracks not indexed in MeloData), the system retries using artist-name-only queries across all distinct Last.fm artists. One resolved ISRC is sufficient to proceed to Phase 3.
+
+3. **Catalog discovery** — resolved ISRCs seed a call to `/v1/recommendations` with the profile's target features (`target_bpm`, `energy`, `danceability`, `valence`). MeloData returns up to 20 tracks from its own catalog that match the target audio signature — these arrive with BPM and full audio features already attached. They enter the catalog as `source="melodata"` and are scored and explained alongside Last.fm and Radio Browser candidates.
+
+This means MasterMix can surface tracks from a third source that are specifically aligned to the listener's target tempo, even when the primary catalog sources have no BPM overlap with MeloData's index.
+
+Radio Browser stations carry no ISRC and are always treated as neutral — never excluded by the BPM filter, never submitted to MeloData.
+
+If `MELODATA_API_KEY` is absent, all three phases are silently skipped. MasterMix degrades gracefully to four-dimensional cosine scoring with no filter applied.
 
 ---
 
@@ -133,10 +153,12 @@ Open `.env` and add your API keys. Two keys are required: `ANTHROPIC_API_KEY` an
 ### Step 4: Run the recommender
 
 ```bash
-python main.py                              # default: afrobeats profile
-python main.py --profile ambient            # quiet, acoustic session
-python main.py --profile jazz               # Sunday morning profile
-python main.py --profile afrobeats --mastermix  # BPM-matched trajectory (requires target_bpm in profile and MELODATA_API_KEY)
+python main.py                                    # default: afrobeats profile
+python main.py --profile ambient                  # quiet, acoustic session
+python main.py --profile jazz                     # Sunday morning profile
+python main.py --profile afrobeats --mastermix    # BPM-matched at profile's target (100 BPM)
+python main.py --profile afrobeats --mastermix --bpm 105   # override target BPM
+python main.py --profile jazz --mastermix --bpm 80         # MasterMix on any profile
 ```
 
 ### Step 5: Run the eval harness
@@ -157,47 +179,82 @@ Runs 10 predefined profiles through the full system and prints a pass/fail summa
 
 ## 8. Sample Interactions
 
-### Example 1: Afrobeats Session
+### Example 1: Afrobeats Session (Standard)
+
+```bash
+python main.py --profile afrobeats
+```
 
 **Input TasteProfile:**
 
 ```text
 Name:         Afrobeats Session
-Energy:       0.85
-Valence:      0.80
-Danceability: 0.90
-Acousticness: 0.15
+Energy:       0.85  Valence: 0.80  Danceability: 0.90  Acousticness: 0.15
 Tags:         afrobeats, dance, african, pop
 Context:      High-energy party playlist for a Friday night gathering.
 ```
 
-**Gatekeeper:** All fields cleared moderation. Profile passed to graph.
+**Misty:** 32 tracks from Last.fm · 38 stations from Radio Browser · Catalog: 70  
+**Tempo:** Scored 70 songs · Top score: 0.9968 · 4 dimensions  
+**Prestige:** 10 Glass Box explanations · Avg confidence: 0.97  
+**Hertz:** Confidence 0.92 — approved  
+**Maestro:** 5-song trajectory selected · Source diversity: lastfm + radio
 
-**Misty:** Called Last.fm and Radio Browser simultaneously. Retrieved 34 songs from Last.fm, 18 stations from Radio Browser. Merged catalog: 52 items.
-
-**Tempo:** Scored 52 songs via cosine similarity. Top score: 0.9421. Songs sorted by similarity descending.
-
-**Prestige:** Generated Glass Box explanations for top 10 candidates.
-
-**Hertz:** Confidence 0.84 — approved. No loop-back required.
-
-**Maestro:** Selected 5-song trajectory prioritizing source diversity and tag overlap.
-
-**Final Trajectory (sample):**
+**Sample track card:**
 
 ```text
-Track 1: Burna Boy — Last Last  [lastfm]
-  Similarity: 0.9421
-  Energy: 0.3312  Valence: 0.2891  Dance: 0.3118  Acoustic: 0.0100
+Track 3: WDR COSMO - Afrobeats  by Germany  [radio]
+  Similarity: 0.9485
+  Energy: 0.3175  Valence: 0.1992  Dance: 0.3944  Acoustic: 0.0374
   Tag overlap: afrobeats, dance
-  Explanation: This track scores 0.9421 similarity. Danceability (0.3118) and
-  energy (0.3312) are the dominant contributors — both align with your
-  high-danceability, high-energy profile. The tags 'afrobeats' and 'dance'
-  overlap directly with your preferred tags. Afrobeats as a genre carries a
-  long tradition of rhythmic complexity rooted in West African percussion,
-  which drives the strong danceability signal. Valence (0.2891) reflects the
-  track's celebratory tone, consistent with your 0.80 valence target.
+  Explanation: This track scores 0.9485 similarity. Danceability (0.3944)
+  and energy (0.3175) are its strongest contributors — both align with your
+  high-energy party profile. The tags 'afrobeats' and 'dance' overlap (2
+  matches). Afrobeats draws on West African percussion and groove traditions,
+  which directly drives the exceptionally high danceability signal.
+  Stream: https://wdr-cosmo-afrobeat.icecastssl.wdr.de/wdr/cosmo/afrobeat/mp3/128/stream.mp3
 ```
+
+---
+
+### Example 2: Afrobeats Session — MasterMix at 105 BPM
+
+```bash
+python main.py --profile afrobeats --mastermix --bpm 105
+```
+
+**Input TasteProfile:**
+
+```text
+Name:         Afrobeats Session
+Energy:       0.85  Valence: 0.80  Danceability: 0.90  Acousticness: 0.15
+Target BPM:   105.0  (set via --bpm)
+MasterMix:    ON — ±5 BPM filter active
+```
+
+**BPM Enrichment (3 phases):**
+
+```text
+Last.fm tracks searched:        32
+BPM values resolved:             4   ← direct ISRC match
+MeloData recommendations added: 18   ← Phase 3 catalog discovery
+Radio Browser stations:         38   (neutral — no ISRC)
+```
+
+**Tempo:** Scored 88 songs · 5 dimensions (energy · valence · danceability · acousticness · bpm)
+
+**Final Trajectory table (with BPM column):**
+
+```text
+ #  Title                      Artist         Source    Score   Confidence  BPM
+ 1  Ye                         Burna Boy      melodata  0.9841  0.97        104
+ 2  Just Dance                 Lady Gaga      lastfm    0.9968  0.99        —
+ 3  WDR COSMO - Afrobeats      Germany        radio     0.9485  0.97        —
+ 4  Essence                    Wizkid         melodata  0.9812  0.98        107
+ 5  Don't Stop the Music       Rihanna        lastfm    0.9968  0.97        —
+```
+
+MeloData tracks show BPM; Last.fm and radio tracks without resolved BPM show `—` and remain eligible as neutral candidates.
 
 ---
 
@@ -309,11 +366,13 @@ Without a hard ceiling, a persistently low-quality catalog could cause the criti
 
 ### MasterMix is opt-in, not always-on
 
-MasterMix adds BPM-based beat-matching to the recommendation pipeline, but it activates only when the listener explicitly requests it with `--mastermix`. An always-on filter would silently exclude high-similarity candidates that fall just outside the ±5 BPM window. Listeners who do not need rhythmic consistency should not have their results constrained by a rule they never set.
+MasterMix adds BPM-based beat-matching and a third live catalog source (MeloData), but activates only when the listener explicitly passes `--mastermix`. An always-on filter would silently exclude high-similarity candidates that fall outside the ±5 BPM window. Listeners who do not need rhythmic consistency should not have their results constrained by a rule they never set.
 
-When active, BPM enters the pipeline at two points. Tempo introduces it as a fifth cosine dimension — the listener's `target_bpm` is normalized against the catalog range and scored alongside energy, valence, danceability, and acousticness. Maestro then applies a hard ±5 BPM proximity filter to the explained candidate pool before its LLM selection step. That filter is deterministic, not a language model judgment. Tracks with no BPM metadata pass unconditionally. If fewer than two candidates carry BPM data, the filter disables itself rather than returning a near-empty pool.
+When active, BPM enters the pipeline at two deterministic points. Tempo adds it as a fifth cosine dimension — `target_bpm` is Min-Max normalized against the catalog range and scored alongside the four base dimensions. Maestro applies a hard ±5 BPM proximity filter before its LLM selection; tracks with no BPM metadata pass unconditionally. If fewer than two candidates carry BPM data, the filter disables itself rather than returning a near-empty pool.
 
-The flag requires `target_bpm` to be declared in the listener profile. Passing `--mastermix` without a declared tempo is rejected at the CLI with a plain-language error. The system does not substitute a default tempo and silently activate BPM scoring — the constraint is explicit or it is not active.
+The `--bpm` flag makes target BPM a runtime argument rather than a compile-time constant. Any profile can be used with MasterMix by supplying `--bpm <value>` at the command line — the value is validated (0–300) and applied to the profile before the session starts. Passing `--mastermix` with no BPM (no flag, no profile default) is rejected at the CLI with a plain-language error. The constraint is explicit or it is not active.
+
+The MeloData catalog discovery step (Phase 3) means MasterMix can introduce tracks the listener would not have seen in a standard session — tracks sourced directly from MeloData's audio-analyzed index, matched to the listener's target tempo and feature vector.
 
 ### Prestige uses Sonnet; other nodes use Haiku
 

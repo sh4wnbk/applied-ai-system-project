@@ -131,18 +131,23 @@ def retrieve(state: AgentState) -> AgentState:
         console.print(
             Panel(
                 "[bold magenta]MasterMix active.[/bold magenta] "
-                "Enriching Last.fm tracks with BPM via MeloData...",
+                "Enriching Last.fm tracks with BPM and querying MeloData catalog "
+                "for recommendations matching your target features...",
                 title="[magenta]— BPM Enrichment —[/magenta]",
                 border_style="magenta",
             )
         )
-        catalog, bpm_hits = enrich_catalog_bpm(catalog)
+        catalog, bpm_hits = enrich_catalog_bpm(catalog, profile)
         _print_bpm_summary(catalog, bpm_hits)
 
+    melodata_count = sum(1 for s in catalog if s.source == "melodata")
     log_entry = (
         f"[{datetime.now().isoformat()}] misty · retrieved {len(lastfm_songs)} from last.fm, "
         f"{len(radio_songs)} from radio browser · total: {len(catalog)}"
-        + (f" · bpm enriched: {bpm_hits}" if state.get("mastermix_mode") else "")
+        + (
+            f" · bpm enriched: {bpm_hits} · melodata recs: {melodata_count}"
+            if state.get("mastermix_mode") else ""
+        )
     )
 
     return {
@@ -181,6 +186,8 @@ def _print_catalog_summary(lastfm: list[SongFeature], radio: list[SongFeature]) 
 def _print_bpm_summary(catalog: list[SongFeature], hits: int) -> None:
     """Print a Rich table showing BPM enrichment results after MeloData call."""
     lastfm_count = sum(1 for s in catalog if s.source == "lastfm")
+    radio_count = sum(1 for s in catalog if s.source == "radio")
+    melodata_count = sum(1 for s in catalog if s.source == "melodata")
     table = Table(title="MasterMix — BPM Enrichment", show_header=True, header_style="bold magenta")
     table.add_column("", style="magenta")
     table.add_column("", justify="right")
@@ -188,6 +195,11 @@ def _print_bpm_summary(catalog: list[SongFeature], hits: int) -> None:
     table.add_row("BPM values resolved", f"[green]{hits}[/green]" if hits else "[yellow]0[/yellow]")
     table.add_row(
         "Radio Browser stations",
-        f"[dim]{sum(1 for s in catalog if s.source == 'radio')} (neutral — no ISRC)[/dim]",
+        f"[dim]{radio_count} (neutral — no ISRC)[/dim]",
     )
+    if melodata_count:
+        table.add_row(
+            "MeloData recommendations added",
+            f"[cyan]{melodata_count}[/cyan]",
+        )
     console.print(table)

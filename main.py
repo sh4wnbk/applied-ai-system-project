@@ -103,7 +103,17 @@ def _parse_args() -> argparse.Namespace:
         help=(
             "Enable MasterMix mode: filter candidates within ±5 BPM of the profile's "
             "target_bpm before final trajectory selection. Requires target_bpm to be "
-            "set in the selected profile."
+            "set in the selected profile or supplied via --bpm."
+        ),
+    )
+    parser.add_argument(
+        "--bpm",
+        type=float,
+        default=None,
+        metavar="BPM",
+        help=(
+            "Override the profile's target BPM (0–300). "
+            "Sets or replaces target_bpm on the selected profile."
         ),
     )
     return parser.parse_args()
@@ -155,8 +165,10 @@ def _print_cass_output(state: AgentState) -> None:
         bd = es.scored_song.vector_breakdown
         overlap_str = ", ".join(es.tag_overlap) if es.tag_overlap else "none"
 
-        source_color = "cyan" if song.source == "lastfm" else "blue"
+        source_color = "cyan" if song.source == "lastfm" else ("yellow" if song.source == "melodata" else "blue")
         url_line = f"\n  Stream: [dim]{song.url}[/dim]" if song.url else ""
+
+        bpm_line = f"\n  BPM:          [yellow]{song.bpm:.0f}[/yellow]" if song.bpm is not None else ""
 
         console.print(
             Panel(
@@ -168,7 +180,8 @@ def _print_cass_output(state: AgentState) -> None:
                 f"  Energy:       {bd.get('energy', 0):.4f}  "
                 f"Valence: {bd.get('valence', 0):.4f}  "
                 f"Dance: {bd.get('danceability', 0):.4f}  "
-                f"Acoustic: {bd.get('acousticness', 0):.4f}\n"
+                f"Acoustic: {bd.get('acousticness', 0):.4f}"
+                f"{bpm_line}\n"
                 f"  Tag overlap:  [green]{overlap_str}[/green]\n"
                 f"  Confidence:   [cyan]{es.confidence:.2f}[/cyan]"
                 f"{url_line}",
@@ -283,12 +296,24 @@ def main() -> None:
     args = _parse_args()
     profile = EXAMPLE_PROFILES[args.profile]
 
+    if args.bpm is not None:
+        if not (0.0 <= args.bpm <= 300.0):
+            console.print(
+                Panel(
+                    "[bold red]--bpm must be between 0 and 300.[/bold red]",
+                    title="[red]Invalid BPM[/red]",
+                    border_style="red",
+                )
+            )
+            sys.exit(1)
+        profile = profile.model_copy(update={"target_bpm": args.bpm})
+
     if args.mastermix and profile.target_bpm is None:
         console.print(
             Panel(
                 "[bold red]MasterMix mode requires a target BPM.[/bold red]\n\n"
                 f"The [cyan]{args.profile}[/cyan] profile does not declare a "
-                f"[cyan]target_bpm[/cyan]. Set one before using [cyan]--mastermix[/cyan].",
+                f"[cyan]target_bpm[/cyan]. Pass [cyan]--bpm <value>[/cyan] to set one.",
                 title="[red]MasterMix Error[/red]",
                 border_style="red",
             )

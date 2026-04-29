@@ -18,7 +18,7 @@ class SongFeature(BaseModel):
 
     title: str
     artist: str
-    source: Literal["lastfm", "radio"]
+    source: Literal["lastfm", "radio", "melodata"]
     energy: float = Field(ge=0.0, le=1.0)
     valence: float = Field(ge=0.0, le=1.0)
     danceability: float = Field(ge=0.0, le=1.0)

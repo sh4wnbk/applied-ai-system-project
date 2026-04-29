@@ -263,6 +263,8 @@ def _print_maestro_panel(candidate_count: int, mastermix_mode: bool = False) -> 
 
 def _print_final_trajectory(songs: list[ExplainedSong], note: str) -> None:
     """Print the final trajectory as a numbered Rich table."""
+    show_bpm = any(es.scored_song.song.bpm is not None for es in songs)
+
     table = Table(
         title="Final Trajectory",
         show_header=True,
@@ -275,16 +277,22 @@ def _print_final_trajectory(songs: list[ExplainedSong], note: str) -> None:
     table.add_column("Source", justify="center")
     table.add_column("Score", justify="right", style="blue")
     table.add_column("Confidence", justify="right", style="cyan")
+    if show_bpm:
+        table.add_column("BPM", justify="right", style="yellow")
 
     for i, es in enumerate(songs, 1):
-        table.add_row(
+        row = [
             str(i),
             es.scored_song.song.title[:35],
             es.scored_song.song.artist[:20],
             es.scored_song.song.source,
             f"{es.scored_song.similarity_score:.4f}",
             f"{es.confidence:.2f}",
-        )
+        ]
+        if show_bpm:
+            bpm = es.scored_song.song.bpm
+            row.append(f"{bpm:.0f}" if bpm is not None else "—")
+        table.add_row(*row)
 
     console.print(table)
     if note:
