@@ -365,6 +365,21 @@ If a harmful output were detected post-delivery in a production deployment of th
 
 This project shows that I build systems that are honest about what they do. The interesting decisions weren't about adding more AI — they were about knowing what each agent should and should not do.
 
+<table>
+  <tr>
+    <td align="center"><img src="assets/cass.png" alt="Cass" width="120"/><br/><b>Cass</b></td>
+    <td align="center"><img src="assets/misty.png" alt="Misty" width="120"/><br/><b>Misty</b></td>
+    <td align="center"><img src="assets/tempo.png" alt="Tempo" width="120"/><br/><b>Tempo</b></td>
+    <td align="center"><img src="assets/prestige.png" alt="Prestige" width="120"/><br/><b>Prestige</b></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="assets/hertz.png" alt="Hertz" width="120"/><br/><b>Hertz</b></td>
+    <td align="center"><img src="assets/maestro.png" alt="Maestro" width="120"/><br/><b>Maestro</b></td>
+    <td align="center"><img src="assets/base.png" alt="Base" width="120"/><br/><b>Base</b></td>
+    <td></td>
+  </tr>
+</table>
+
 | Agent | Role | Design Decision |
 |---|---|---|
 | Misty | Retrieve | Calls Last.fm and Radio Browser simultaneously — never one at a time |

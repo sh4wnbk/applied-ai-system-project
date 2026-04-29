@@ -57,29 +57,43 @@ def retrieve(state: AgentState) -> AgentState:
         lastfm_future = pool.submit(fetch_songs, tags)
         radio_future = pool.submit(fetch_stations, tags)
 
-        for future in as_completed([lastfm_future, radio_future], timeout=_SOURCE_TIMEOUT + 5):
-            if future is lastfm_future:
-                try:
-                    lastfm_songs = lastfm_future.result(timeout=_SOURCE_TIMEOUT)
-                    lastfm_ok = True
-                    logger.info("misty · last.fm · %d songs retrieved", len(lastfm_songs))
-                except Exception as exc:
-                    logger.warning("misty · last.fm · failed: %s", exc)
-                    console.print(
-                        "[yellow]Last.fm is currently unavailable. "
-                        "Recommendations based on Radio Browser only.[/yellow]"
-                    )
-            elif future is radio_future:
-                try:
-                    radio_songs = radio_future.result(timeout=_SOURCE_TIMEOUT)
-                    radio_ok = True
-                    logger.info("misty · radio browser · %d stations retrieved", len(radio_songs))
-                except Exception as exc:
-                    logger.warning("misty · radio browser · failed: %s", exc)
-                    console.print(
-                        "[yellow]Radio Browser is currently unavailable. "
-                        "Recommendations based on Last.fm only.[/yellow]"
-                    )
+        try:
+            for future in as_completed([lastfm_future, radio_future], timeout=_SOURCE_TIMEOUT + 5):
+                if future is lastfm_future:
+                    try:
+                        lastfm_songs = lastfm_future.result(timeout=_SOURCE_TIMEOUT)
+                        lastfm_ok = True
+                        logger.info("misty · last.fm · %d songs retrieved", len(lastfm_songs))
+                    except Exception as exc:
+                        logger.warning("misty · last.fm · failed: %s", exc)
+                        console.print(
+                            "[yellow]Last.fm is currently unavailable. "
+                            "Recommendations based on Radio Browser only.[/yellow]"
+                        )
+                elif future is radio_future:
+                    try:
+                        radio_songs = radio_future.result(timeout=_SOURCE_TIMEOUT)
+                        radio_ok = True
+                        logger.info("misty · radio browser · %d stations retrieved", len(radio_songs))
+                    except Exception as exc:
+                        logger.warning("misty · radio browser · failed: %s", exc)
+                        console.print(
+                            "[yellow]Radio Browser is currently unavailable. "
+                            "Recommendations based on Last.fm only.[/yellow]"
+                        )
+        except FuturesTimeout:
+            if not lastfm_ok:
+                logger.warning("misty · last.fm · timed out")
+                console.print(
+                    "[yellow]Last.fm timed out. "
+                    "Recommendations based on Radio Browser only.[/yellow]"
+                )
+            if not radio_ok:
+                logger.warning("misty · radio browser · timed out")
+                console.print(
+                    "[yellow]Radio Browser timed out. "
+                    "Recommendations based on Last.fm only.[/yellow]"
+                )
 
     if not lastfm_ok and not radio_ok:
         console.print(

@@ -62,6 +62,21 @@ The sequence diagram reflects the actual runtime flow across a single session. A
 | Maestro | Orchestrate + Rank | `nodes/rerank.py` |
 | Base | Narrator | `display/agents.py` |
 
+<table>
+  <tr>
+    <td align="center"><img src="assets/cass.png" alt="Cass" width="120"/><br/><b>Cass</b></td>
+    <td align="center"><img src="assets/misty.png" alt="Misty" width="120"/><br/><b>Misty</b></td>
+    <td align="center"><img src="assets/tempo.png" alt="Tempo" width="120"/><br/><b>Tempo</b></td>
+    <td align="center"><img src="assets/prestige.png" alt="Prestige" width="120"/><br/><b>Prestige</b></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="assets/hertz.png" alt="Hertz" width="120"/><br/><b>Hertz</b></td>
+    <td align="center"><img src="assets/maestro.png" alt="Maestro" width="120"/><br/><b>Maestro</b></td>
+    <td align="center"><img src="assets/base.png" alt="Base" width="120"/><br/><b>Base</b></td>
+    <td></td>
+  </tr>
+</table>
+
 **Cass** opens and closes every session — the Sony Walkman is always the first thing and the last thing the listener sees.
 
 **Misty** listens to two sources at once. The Neumann U87 is a studio microphone built for capturing everything in the room simultaneously — Misty calls Last.fm and Radio Browser in parallel, never one at a time.

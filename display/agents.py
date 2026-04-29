@@ -1,7 +1,7 @@
 """
 Character rendering utilities for Music Recommender: Music Theory.
 
-Each of the seven agent characters has a JPG asset in /assets. When a node
+Each of the seven agent characters has a PNG asset in /assets. When a node
 fires, the character's image is rendered inline via Kitty's icat protocol,
 followed by a Rich panel with the character's name, instrument, and role.
 
@@ -28,54 +28,54 @@ console = Console()
 _ASSETS_DIR = Path(__file__).parent.parent / "assets"
 
 # Complete character roster. Each entry maps the canonical character name to
-# display metadata. The asset filename for Prestige is prestige.jpg.
+# display metadata. The asset filename for Prestige is prestige.png.
 CHARACTERS: dict[str, dict[str, str]] = {
     "Cass": {
         "instrument": "Sony Walkman",
         "role": "Input + Output",
-        "asset": "cass.jpg",
+        "asset": "cass.png",
         "color": "red",
         "tagline": "First in, last out. Every session starts and ends with Cass.",
     },
     "Misty": {
         "instrument": "Neumann U87",
         "role": "Retrieve",
-        "asset": "misty.jpg",
+        "asset": "misty.png",
         "color": "cyan",
         "tagline": "Scanning the airwaves. If it exists, Misty will find it.",
     },
     "Tempo": {
         "instrument": "Metronome",
         "role": "Score",
-        "asset": "tempo.jpg",
+        "asset": "tempo.png",
         "color": "magenta",
         "tagline": "Measuring distance in four dimensions. No guessing. Only math.",
     },
     "Prestige": {
         "instrument": "Technics SL-1200",
         "role": "Explain + RAG",
-        "asset": "prestige.jpg",
+        "asset": "prestige.png",
         "color": "yellow",
         "tagline": "Opening the glass box. Every recommendation earns its place.",
     },
     "Hertz": {
         "instrument": "VU Meter",
         "role": "Critique",
-        "asset": "hertz.jpg",
+        "asset": "hertz.png",
         "color": "green",
         "tagline": "Checking the signal. No weak explanations make it through.",
     },
     "Maestro": {
         "instrument": "Command Desk",
         "role": "Orchestrate + Rank",
-        "asset": "maestro.jpg",
+        "asset": "maestro.png",
         "color": "blue",
         "tagline": "Five songs. One journey. Maestro arranges the set list.",
     },
     "Base": {
         "instrument": "Upright Bass",
         "role": "Narrator",
-        "asset": "base.jpg",
+        "asset": "base.png",
         "color": "white",
         "tagline": "The voice beneath everything. Base sets the scene.",
     },
