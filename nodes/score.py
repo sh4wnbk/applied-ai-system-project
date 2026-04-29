@@ -192,6 +192,8 @@ def _print_tempo_panel(catalog_size: int, dimensions: list[str]) -> None:
 
 def _print_score_table(top_songs: list[ScoredSong]) -> None:
     """Print a Rich table of the top-scored songs with per-dimension breakdown."""
+    show_bpm = any(s.song.bpm is not None for s in top_songs)
+
     table = Table(title="Top Scored Songs", show_header=True, header_style="bold magenta")
     table.add_column("Title", style="white", no_wrap=True)
     table.add_column("Artist", style="dim")
@@ -201,10 +203,12 @@ def _print_score_table(top_songs: list[ScoredSong]) -> None:
     table.add_column("Valence", justify="right")
     table.add_column("Dance", justify="right")
     table.add_column("Acoustic", justify="right")
+    if show_bpm:
+        table.add_column("BPM", justify="right", style="yellow")
 
     for s in top_songs:
         bd = s.vector_breakdown
-        table.add_row(
+        row = [
             s.song.title[:30],
             s.song.artist[:20],
             s.song.source,
@@ -213,6 +217,9 @@ def _print_score_table(top_songs: list[ScoredSong]) -> None:
             f"{bd.get('valence', 0):.3f}",
             f"{bd.get('danceability', 0):.3f}",
             f"{bd.get('acousticness', 0):.3f}",
-        )
+        ]
+        if show_bpm:
+            row.append(f"{s.song.bpm:.0f}" if s.song.bpm is not None else "—")
+        table.add_row(*row)
 
     console.print(table)
