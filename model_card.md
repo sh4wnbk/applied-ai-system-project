@@ -126,7 +126,7 @@ Characters arranged to form visual patterns that are harmful but technically cle
 
 ## 6. Data Provenance
 
-### Last.fm
+### <img src="assets/lastfm.png" alt="Last.fm" height="20" style="vertical-align:middle"/> Last.fm
 
 Last.fm is a music tracking and social cataloging platform. Tags on Last.fm are user-generated and unmoderated. Any registered user can apply any tag to any track. This means the tag corpus contains the full range of human expression — accurate genre labels alongside offensive, inaccurate, or spam tags.
 
@@ -139,7 +139,7 @@ Biases present in Last.fm data:
 
 Audio features in this system are estimated from tag semantics, not from audio analysis. A song tagged "ambient" is assigned a high acousticness estimate; a song tagged "metal" is assigned a high energy estimate. These estimates are intentionally coarse and are documented as heuristic, not authoritative.
 
-### Radio Browser
+### <img src="assets/radio_browser.png" alt="Radio Browser" height="20" style="vertical-align:middle"/> Radio Browser
 
 Radio Browser is a community-run directory of internet radio stations. It has no moderation infrastructure. Station names, tags, and descriptions are submitted by community members without review. Some stations broadcast adult content, extremist speech, or content not appropriate for general audiences.
 

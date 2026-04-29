@@ -18,7 +18,9 @@ Music Theory replaces the simulation with a working machine. The catalog is live
 
 Music Theory accepts a listener profile — four audio dimension values and a set of genre or mood tags — and returns a prioritized, explained five-song trajectory.
 
-The system retrieves songs from two live data sources simultaneously: Last.fm (track-level data) and Radio Browser (live station directory). A cosine similarity engine scores every retrieved song against the listener's profile vector. A language model generates a Glass Box explanation for each top candidate — an explanation that names the specific dimensions that drove the match, states the numerical score, and lists which tags overlapped. A critique agent evaluates the explanation set and requests a second retrieval pass if the quality is insufficient. A final ranking agent selects five songs and arranges them as a listening trajectory.
+The system retrieves songs from two live data sources simultaneously:
+
+<img src="assets/lastfm.png" alt="Last.fm" height="28" style="vertical-align:middle"/> Last.fm (track-level data) &nbsp;&nbsp; <img src="assets/radio_browser.png" alt="Radio Browser" height="28" style="vertical-align:middle"/> Radio Browser (live station directory) A cosine similarity engine scores every retrieved song against the listener's profile vector. A language model generates a Glass Box explanation for each top candidate — an explanation that names the specific dimensions that drove the match, states the numerical score, and lists which tags overlapped. A critique agent evaluates the explanation set and requests a second retrieval pass if the quality is insufficient. A final ranking agent selects five songs and arranges them as a listening trajectory.
 
 Every intermediate step is visible in the terminal. Every recommendation earns its place with evidence.
 
