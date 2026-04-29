@@ -42,7 +42,7 @@ Tempo introduces BPM as a fifth cosine dimension. The listener's target tempo is
 
 **The BPM pipeline — three phases:**
 
-After Misty completes dual-source retrieval, MasterMix triggers a three-phase BPM enrichment via the <img src="assets/melodata.png" alt="MeloData" height="18" style="vertical-align:middle"/> MeloData API:
+After Misty completes dual-source retrieval, MasterMix triggers a three-phase BPM enrichment via the [MeloData API](https://melodata.voltenworks.com/):
 
 1. **Track enrichment** — each Last.fm track is searched by title and artist to resolve its ISRC. Resolved ISRCs are submitted in a batch features call to populate `SongFeature.bpm` with high-accuracy values from real audio analysis (Essentia engine). Featured-artist credits are stripped from titles before search to improve match rates.
 
