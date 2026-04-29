@@ -73,7 +73,6 @@ The sequence diagram reflects the actual runtime flow across a single session. A
     <td align="center"><img src="assets/hertz.png" alt="Hertz" width="120"/><br/><b>Hertz</b></td>
     <td align="center"><img src="assets/maestro.png" alt="Maestro" width="120"/><br/><b>Maestro</b></td>
     <td align="center"><img src="assets/base.png" alt="Base" width="120"/><br/><b>Base</b></td>
-    <td></td>
   </tr>
 </table>
 
