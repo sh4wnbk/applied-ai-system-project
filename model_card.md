@@ -367,17 +367,17 @@ This project shows that I build systems that are honest about what they do. The 
 
 <table>
   <tr>
-    <td colspan="3" align="center"><img src="assets/base.png" alt="Base" width="120"/><br/><b>Base</b></td>
+    <td colspan="3" align="center" valign="bottom"><img src="assets/base.png" alt="Base" width="180"/><br/><b>Base</b></td>
   </tr>
   <tr>
-    <td align="center"><img src="assets/cass.png" alt="Cass" width="120"/><br/><b>Cass</b></td>
-    <td align="center"><img src="assets/misty.png" alt="Misty" width="120"/><br/><b>Misty</b></td>
-    <td align="center"><img src="assets/tempo.png" alt="Tempo" width="120"/><br/><b>Tempo</b></td>
+    <td align="center" valign="bottom"><img src="assets/cass.png" alt="Cass" width="120"/><br/><b>Cass</b></td>
+    <td align="center" valign="bottom"><img src="assets/misty.png" alt="Misty" width="120"/><br/><b>Misty</b></td>
+    <td align="center" valign="bottom"><img src="assets/tempo.png" alt="Tempo" width="120"/><br/><b>Tempo</b></td>
   </tr>
   <tr>
-    <td align="center"><img src="assets/prestige.png" alt="Prestige" width="120"/><br/><b>Prestige</b></td>
-    <td align="center"><img src="assets/hertz.png" alt="Hertz" width="120"/><br/><b>Hertz</b></td>
-    <td align="center"><img src="assets/maestro.png" alt="Maestro" width="120"/><br/><b>Maestro</b></td>
+    <td align="center" valign="bottom"><img src="assets/prestige.png" alt="Prestige" width="120"/><br/><b>Prestige</b></td>
+    <td align="center" valign="bottom"><img src="assets/hertz.png" alt="Hertz" width="120"/><br/><b>Hertz</b></td>
+    <td align="center" valign="bottom"><img src="assets/maestro.png" alt="Maestro" width="120"/><br/><b>Maestro</b></td>
   </tr>
 </table>
 
